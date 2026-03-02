@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DashboardLayout from "./dashboard-layout";
+import dynamic from "next/dynamic";
 import { ThemeProvider } from "./theme-provider";
+
+const DashboardLayout = dynamic(() => import("./dashboard-layout"), { ssr: false });
 
 const SITE_URL = "https://pipeline.ai";
 const SITE_NAME = "Pipeline AI";

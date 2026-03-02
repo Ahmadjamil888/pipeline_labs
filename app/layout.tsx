@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import dynamic from "next/dynamic";
+import DashboardLayoutClient from "./dashboard-layout-client";
 import { ThemeProvider } from "./theme-provider";
 
-const DashboardLayout = dynamic(() => import("./dashboard-layout"), { ssr: false });
-
-const SITE_URL = "https://pipeline.ai";
+const SITE_URL = "https://pipeline-labs.vercel.app";
 const SITE_NAME = "Pipeline AI";
 const TITLE = "Pipeline AI — One-Click Zero-Config AI Infrastructure";
 const DESCRIPTION =
@@ -130,9 +128,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <ThemeProvider>
-          <DashboardLayout>
+          <DashboardLayoutClient>
             {children}
-          </DashboardLayout>
+          </DashboardLayoutClient>
         </ThemeProvider>
       </body>
     </html>

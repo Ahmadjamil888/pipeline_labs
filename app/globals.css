@@ -1,0 +1,194 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Helvetica World", "Helvetica", "Arial", sans-serif;
+
+  --color-brand-bg: var(--background);
+  --color-brand-text: var(--foreground);
+  --color-brand-border: var(--border);
+  --color-brand-nav: var(--nav-text);
+}
+
+/* ── Theme variables ──────────────────────────────────── */
+:root {
+  --background: #0b0b0b;
+  --foreground: #ffffff;
+  --border: #262626;
+  --nav-text: #eaeaea;
+  --card-bg: #0e0e0e;
+  --sidebar-bg: #0b0b0b;
+}
+
+/* Dark theme — matches root defaults */
+[data-theme='dark'] {
+  --background: #0b0b0b;
+  --foreground: #ffffff;
+  --border: #262626;
+  --nav-text: #eaeaea;
+  --card-bg: #0e0e0e;
+  --sidebar-bg: #0b0b0b;
+}
+
+/* Light theme — clean white surface */
+[data-theme='light'] {
+  --background: #fafafa;
+  --foreground: #0a0a0a;
+  --border: #e5e5e5;
+  --nav-text: #3a3a3a;
+  --card-bg: #f2f2f2;
+  --sidebar-bg: #ffffff;
+}
+
+/* ── Global typography ─────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  font-family: "Helvetica World", "Helvetica", "Arial", sans-serif;
+  font-weight: 300;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 300;
+  overflow-x: hidden;
+}
+
+/* Force mono element to stay monospace */
+code,
+pre,
+samp,
+kbd,
+tt {
+  font-family: "SFMono-Regular", "Consolas", "Menlo", monospace;
+  font-weight: 400;
+}
+
+/* ── MAGNETIC BUTTONS ──────────────────────────────────────── */
+.buttons {
+  margin-top: 40px;
+  display: flex;
+  gap: 25px;
+  justify-content: center;
+}
+
+.btn {
+  padding: 16px 32px;
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, background 0.3s ease;
+  backdrop-filter: blur(20px);
+  font-family: "Helvetica World", "Helvetica", "Arial", sans-serif;
+  font-weight: 300;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn.light {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.btn.light:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Utility classes ───────────────────────────────────────── */
+.cursor-pill {
+  border-radius: 9999px;
+}
+
+.nav-link {
+  color: rgba(255, 255, 255, 0.8);
+  transition: opacity 0.2s;
+  font-family: "Helvetica World", "Helvetica", "Arial", sans-serif;
+  font-weight: 300;
+}
+
+.nav-link:hover {
+  opacity: 0.5;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-card-mini {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* ── Custom scrollbar override for panels ──────────────────── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}

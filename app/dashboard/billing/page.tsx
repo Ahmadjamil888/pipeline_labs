@@ -66,11 +66,17 @@ export default function BillingPage() {
         setSubscription(data)
       } else {
         // Create default free subscription
-        const defaultSub = {
+        const defaultSub: Subscription = {
+          id: crypto.randomUUID(),
           user_id: user.id,
           plan: 'free',
           status: 'active',
-          current_period_end: null
+          current_period_end: new Date().toISOString(),
+          usage: {
+            deployments: 0,
+            sandboxes: 0,
+            bandwidth: 0
+          }
         }
         setSubscription(defaultSub)
         await supabase.from('subscriptions').upsert(defaultSub)

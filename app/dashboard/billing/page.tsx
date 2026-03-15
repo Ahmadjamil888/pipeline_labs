@@ -11,6 +11,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 interface Subscription {
   id: string
+  user_id?: string
   plan: string
   status: string
   current_period_end: string

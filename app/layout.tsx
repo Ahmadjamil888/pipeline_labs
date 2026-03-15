@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DashboardLayoutClient from "./dashboard-layout-client";
 import { ThemeProvider } from "./theme-provider";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const SITE_URL = "https://pipeline-labs.vercel.app";
 const SITE_NAME = "Pipeline AI";
@@ -119,7 +122,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <head>
         <script
           type="application/ld+json"
@@ -128,9 +131,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <ThemeProvider>
-          <DashboardLayoutClient>
-            {children}
-          </DashboardLayoutClient>
+          {children}
         </ThemeProvider>
       </body>
     </html>

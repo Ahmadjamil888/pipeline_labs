@@ -52,7 +52,7 @@ export default function DeploymentsPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'succeeded': return <CheckCircle2 size={16} style={{ color: "#22c55e" }} />
-      case 'failed': return <XCircle2 size={16} style={{ color: "#ef4444" }} />
+      case 'failed': return <XCircle size={16} style={{ color: "#ef4444" }} />
       case 'running': return <RefreshCw size={16} className="animate-spin" style={{ color: "#3b82f6" }} />
       default: return <Clock size={16} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }} />
     }

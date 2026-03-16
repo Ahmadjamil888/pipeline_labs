@@ -7,7 +7,8 @@ import type {
   DeploymentCreateRequest,
   DeploymentStatus,
   DeploymentExecutionResponse,
-  DeploymentLogs
+  DeploymentLogs,
+  DeploymentList
 } from '../api-types'
 
 // Hook for managing deployments

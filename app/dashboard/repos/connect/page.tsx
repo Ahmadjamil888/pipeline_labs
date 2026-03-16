@@ -255,21 +255,14 @@ export default function ConnectRepoPage() {
 
           <button
             onClick={connectRepo}
-            disabled={!selectedRepo || step === 'connecting'}
+            disabled={!selectedRepo}
             className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[14px] mt-6"
             style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#000" : "#fff" }}
           >
-            {step === 'connecting' ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              <>
-                <Plus size={18} />
-                Connect {selectedRepo?.name}
-              </>
-            )}
+            <>
+              <Plus size={18} />
+              Connect {selectedRepo?.name}
+            </>
           </button>
         </div>
       )}

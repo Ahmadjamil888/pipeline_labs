@@ -16,7 +16,7 @@ export type Language =
 
 export type Platform = 'vercel' | 'render' | 'docker'
 
-export type DeploymentStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'retrying'
+export type DeploymentState = 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'retrying'
 
 export type ServiceDeploymentStatus = 'pending' | 'building' | 'deploying' | 'deployed' | 'failed' | 'skipped'
 
@@ -139,7 +139,7 @@ export interface DeploymentStatus {
   id: string
   repo_id: string
   sandbox_id?: string
-  status: DeploymentStatus
+  status: DeploymentState
   services: ServiceDeployment[]
   environment: Environment
   branch?: string

@@ -3,6 +3,20 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://pipeline-ai-labs-by-ahmad.up.railway.app/api/v1'
 
+// Helper to normalize HeadersInit → Record<string, string>
+function headersToRecord(h?: HeadersInit): Record<string, string> {
+  if (!h) return {}
+  if (h instanceof Headers) {
+    const out: Record<string, string> = {}
+    h.forEach((val, key) => { out[key] = val })
+    return out
+  }
+  if (Array.isArray(h)) {
+    return Object.fromEntries(h)
+  }
+  return h as Record<string, string>
+}
+
 interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | undefined>
 }
@@ -38,10 +52,10 @@ class PipelineApiClient {
     }
 
     // Default headers
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      ...restConfig.headers,
+      ...headersToRecord(restConfig.headers),
     }
 
     // Add auth header if API key available

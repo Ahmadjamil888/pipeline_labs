@@ -424,14 +424,14 @@ export default function DocsPage() {
                           <h4 className="text-[14px] mb-1" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "#fff" : "#0a0a0a" }}>
                             {endpoint.summary}
                           </h4>
-                          {endpoint.description && (
+                          {'description' in endpoint && endpoint.description && (
                             <p className="text-[12px] mb-3" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
                               {endpoint.description}
                             </p>
                           )}
 
                           {/* Request Body */}
-                          {endpoint.requestBody && (
+                          {'requestBody' in endpoint && endpoint.requestBody && (
                             <div className="mt-3">
                               <div className="text-[11px] uppercase tracking-wider mb-2" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}>
                                 Request Body

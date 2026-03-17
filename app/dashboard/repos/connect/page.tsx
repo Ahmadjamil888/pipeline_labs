@@ -68,12 +68,19 @@ export default function ConnectRepoPage() {
 
   const startGitHubAppInstall = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/github/connect`)
+      // Get user first before making API call
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      
+      const res = await fetch(`${API_URL}/api/v1/github/connect?user_id=${user.id}`)
       if (!res.ok) throw new Error('Failed to get install URL')
       
       const data = await res.json()
       // Redirect to GitHub App installation page
-      window.location.href = data.url
+      window.location.href = data.auth_url
     } catch (err: any) {
       setError(err.message || 'Failed to start GitHub App installation')
     }

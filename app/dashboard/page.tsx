@@ -81,7 +81,7 @@ export default function DashboardPage() {
         const { data: projectsData } = await supabase
           .from('projects')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('owner_id', user.id)
           .order('created_at', { ascending: false })
 
         if (projectsData) {

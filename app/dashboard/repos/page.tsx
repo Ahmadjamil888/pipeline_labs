@@ -38,7 +38,7 @@ export default function ReposPage() {
       const { data } = await supabase
         .from('projects')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
 
       if (data) setProjects(data)

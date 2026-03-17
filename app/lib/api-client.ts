@@ -2,8 +2,8 @@
 // Replace with Stainless-generated SDK when available
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-  ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/api/v1`  // Remove trailing slashes, add /api/v1
-  : 'https://pipeline-ai-labs-by-ahmad.up.railway.app/api/v1'
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')  // Remove trailing slashes only
+  : 'https://pipeline-ai-labs-by-ahmad.up.railway.app'
 
 // Helper to normalize HeadersInit → Record<string, string>
 function headersToRecord(h?: HeadersInit): Record<string, string> {

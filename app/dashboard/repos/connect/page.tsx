@@ -8,7 +8,7 @@ import { ArrowLeft, Github, Gitlab, Loader2, CheckCircle2, Plus, RefreshCw, Code
 import { useTheme } from "@/app/theme-provider"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pipeline-ai-labs-by-ahmad.up.railway.app'
 
 interface GitHubRepo {
   id: number

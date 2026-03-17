@@ -17,7 +17,7 @@ import {
 import { useTheme } from "@/app/theme-provider"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pipeline-ai-labs-by-ahmad.up.railway.app'
 
 interface Project {
   id: string
@@ -73,7 +73,7 @@ export default function DashboardPage() {
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single()
         
         if (profileData) setProfile(profileData)

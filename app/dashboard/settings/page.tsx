@@ -30,7 +30,7 @@ export default function SettingsPage() {
       const { data } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single()
 
       if (data) {
@@ -49,7 +49,7 @@ export default function SettingsPage() {
 
     const { error } = await supabase
       .from('profiles')
-      .upsert({ id: user.id, full_name: fullName, updated_at: new Date().toISOString() })
+      .upsert({ user_id: user.id, full_name: fullName, updated_at: new Date().toISOString() })
 
     if (!error) {
       setMessage('Settings saved successfully')

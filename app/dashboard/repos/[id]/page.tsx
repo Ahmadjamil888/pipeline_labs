@@ -8,7 +8,7 @@ import { Github, ArrowLeft, Rocket, Terminal, RefreshCw, Trash2, ExternalLink } 
 import { useTheme } from "@/app/theme-provider"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pipeline-ai-labs-by-ahmad.up-railway.app'
 
 interface Project {
   id: string

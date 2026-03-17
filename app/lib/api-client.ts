@@ -1,7 +1,9 @@
 // FastAPI Backend Client Configuration
 // Replace with Stainless-generated SDK when available
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://pipeline-ai-labs-by-ahmad.up.railway.app/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+  ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/api/v1`  // Remove trailing slashes, add /api/v1
+  : 'https://pipeline-ai-labs-by-ahmad.up.railway.app/api/v1'
 
 // Helper to normalize HeadersInit → Record<string, string>
 function headersToRecord(h?: HeadersInit): Record<string, string> {

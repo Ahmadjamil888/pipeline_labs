@@ -9,6 +9,7 @@ import { useTheme } from "@/app/theme-provider"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pipeline-ai-labs-by-ahmad.up.railway.app'
+const GITHUB_APP_NAME = process.env.NEXT_PUBLIC_GITHUB_APP_NAME || 'pipeline.ai.labs'
 
 interface GitHubRepo {
   id: number
@@ -68,19 +69,16 @@ export default function ConnectRepoPage() {
 
   const startGitHubAppInstall = async () => {
     try {
-      // Get user first before making API call
+      // Get user first
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
       }
       
-      const res = await fetch(`${API_URL}/api/v1/github/connect?user_id=${user.id}`)
-      if (!res.ok) throw new Error('Failed to get install URL')
-      
-      const data = await res.json()
-      // Redirect to GitHub App installation page
-      window.location.href = data.auth_url
+      // Redirect directly to GitHub App installation page
+      const installUrl = `https://github.com/apps/${GITHUB_APP_NAME}/installations/new?state=${user.id}`
+      window.location.href = installUrl
     } catch (err: any) {
       setError(err.message || 'Failed to start GitHub App installation')
     }

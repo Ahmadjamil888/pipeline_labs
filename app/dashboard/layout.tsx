@@ -20,7 +20,8 @@ import {
   Moon,
   Plus,
   ArrowRight,
-  PanelLeft
+  PanelLeft,
+  RefreshCw
 } from "lucide-react"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
@@ -38,6 +39,7 @@ const navigation = [
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
   const { theme, toggleTheme } = useTheme()
@@ -45,15 +47,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const isDark = theme === "dark"
 
   useEffect(() => {
-    async function fetchUser() {
+    async function fetchUserAndCheckOrg() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
       }
       setUser(user)
+
+      // Check if user has an organization
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('user_id', user.id)
+        .limit(1)
+
+      if (!orgs || orgs.length === 0) {
+        // Redirect to onboarding if no organization
+        router.push('/onboarding')
+        return
+      }
+
+      setLoading(false)
     }
-    fetchUser()
+    fetchUserAndCheckOrg()
   }, [supabase, router])
 
   const toggleSidebar = () => {
@@ -63,6 +80,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/login')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: isDark ? "#050505" : "#fafafa" }}>
+        <RefreshCw size={32} className="animate-spin" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }} />
+      </div>
+    )
   }
 
   return (

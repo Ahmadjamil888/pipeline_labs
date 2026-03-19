@@ -59,7 +59,22 @@ export default function LoginPage() {
           password,
         })
         if (signInError) throw signInError
-        router.push('/dashboard')
+        
+        // Check if user has an organization
+        const { data: { user: loggedInUser } } = await supabase.auth.getUser()
+        if (loggedInUser) {
+          const { data: orgs } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('user_id', loggedInUser.id)
+            .limit(1)
+          
+          if (!orgs || orgs.length === 0) {
+            router.push('/onboarding')
+          } else {
+            router.push('/dashboard')
+          }
+        }
       }
     } catch (err: any) {
       setError(err.message || "Authentication failed.")

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/app/supabase-client"
 import { useRouter } from "next/navigation"
-import { Settings, User, Bell, Shield, Key, Save, RefreshCw, Copy, Plus, Trash2, Eye, EyeOff } from "lucide-react"
+import { Settings, User, Bell, Shield, Key, Save, RefreshCw, Copy, Plus, Trash2, Eye, EyeOff, X, Check } from "lucide-react"
 import { useTheme } from "@/app/theme-provider"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
@@ -11,7 +11,7 @@ const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
 interface ApiKey {
   id: string
   name: string
-  key: string
+  key_hash: string
   key_preview: string
   created_at: string
   last_used_at: string | null
@@ -33,7 +33,9 @@ export default function SettingsPage() {
   const [showNewKeyForm, setShowNewKeyForm] = useState(false)
   const [newKeyName, setNewKeyName] = useState('')
   const [generatingKey, setGeneratingKey] = useState(false)
+  const [showKeyModal, setShowKeyModal] = useState(false)
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const [showKeyId, setShowKeyId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -75,6 +77,27 @@ export default function SettingsPage() {
     }
   }
 
+  // Generate a cryptographically secure API key
+  const generateSecureApiKey = () => {
+    const prefix = 'pipe_'
+    // Use crypto.getRandomValues for strong randomness
+    const array = new Uint8Array(32)
+    crypto.getRandomValues(array)
+    const randomPart = Array.from(array)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+    return prefix + randomPart
+  }
+
+  // Simple hash function for storing key hash (SHA-256)
+  const hashKey = async (key: string): Promise<string> => {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(key)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
   const generateApiKey = async () => {
     if (!newKeyName.trim()) return
     
@@ -82,19 +105,18 @@ export default function SettingsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Generate a random API key
-    const prefix = 'pipe_'
-    const randomPart = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-    const fullKey = prefix + randomPart
+    // Generate secure API key
+    const fullKey = generateSecureApiKey()
+    
+    // Hash the key for storage
+    const keyHash = await hashKey(fullKey)
     
     const { data, error } = await supabase
       .from('api_keys')
       .insert({
         user_id: user.id,
         name: newKeyName.trim(),
-        key: fullKey,
+        key_hash: keyHash,
         key_preview: fullKey.slice(0, 8) + '...' + fullKey.slice(-4),
         created_at: new Date().toISOString()
       })
@@ -106,11 +128,35 @@ export default function SettingsPage() {
       setApiKeys([data, ...apiKeys])
       setNewKeyName('')
       setShowNewKeyForm(false)
-      setMessage('API key created successfully! Copy it now - you won\'t see it again.')
-      setTimeout(() => setMessage(null), 5000)
+      setShowKeyModal(true)
+      setCopied(false)
+    } else {
+      setMessage('Failed to create API key. Please try again.')
+      setTimeout(() => setMessage(null), 3000)
     }
     
     setGeneratingKey(false)
+  }
+
+  const copyToClipboard = async () => {
+    if (!newlyCreatedKey) return
+    
+    try {
+      await navigator.clipboard.writeText(newlyCreatedKey)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      setMessage('Failed to copy to clipboard')
+      setTimeout(() => setMessage(null), 2000)
+    }
+  }
+
+  const closeKeyModal = () => {
+    setShowKeyModal(false)
+    setNewlyCreatedKey(null)
+    setCopied(false)
+    setMessage('API key created successfully! Make sure to store it securely.')
+    setTimeout(() => setMessage(null), 3000)
   }
 
   const deleteApiKey = async (keyId: string) => {
@@ -123,13 +169,10 @@ export default function SettingsPage() {
       setApiKeys(apiKeys.filter(k => k.id !== keyId))
       setMessage('API key deleted successfully')
       setTimeout(() => setMessage(null), 3000)
+    } else {
+      setMessage('Failed to delete API key')
+      setTimeout(() => setMessage(null), 3000)
     }
-  }
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setMessage('Copied to clipboard!')
-    setTimeout(() => setMessage(null), 2000)
   }
 
   const handleSave = async () => {
@@ -296,28 +339,63 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Newly Created Key Alert */}
-            {newlyCreatedKey && (
-              <div className="p-4 rounded-xl mb-4" style={{ background: "rgba(34,197,94,0.1)" }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[13px]" style={{ fontFamily: HF, fontWeight: 400, color: "#22c55e" }}>
-                    Copy this key now - you won't see it again!
-                  </span>
-                  <button onClick={() => setNewlyCreatedKey(null)} className="text-[#22c55e] hover:opacity-70">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 px-3 py-2 rounded-lg text-[12px] break-all" style={{ background: isDark ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.5)", fontFamily: "monospace", color: isDark ? "#22c55e" : "#15803d" }}>
-                    {newlyCreatedKey}
-                  </code>
-                  <button
-                    onClick={() => copyToClipboard(newlyCreatedKey)}
-                    className="p-2 rounded-lg"
-                    style={{ background: "#22c55e" }}
-                  >
-                    <Copy size={16} color="#fff" />
-                  </button>
+            {/* API Key Modal */}
+            {showKeyModal && newlyCreatedKey && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
+                <div className="w-full max-w-md p-6 rounded-2xl border" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "#0a0a0a" : "#fff" }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Key size={20} style={{ color: "#22c55e" }} />
+                      <span className="text-[16px]" style={{ fontFamily: HF, fontWeight: 400, color: isDark ? "#fff" : "#0a0a0a" }}>
+                        API Key Created
+                      </span>
+                    </div>
+                    <button
+                      onClick={closeKeyModal}
+                      className="p-1 rounded-lg opacity-60 hover:opacity-100"
+                      style={{ color: isDark ? "#fff" : "#0a0a0a" }}
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-[13px] mb-3" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }}>
+                      Copy this key now. You won&apos;t be able to see it again!
+                    </p>
+                    
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 px-4 py-3 rounded-xl text-[12px] break-all" style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", fontFamily: "monospace", color: isDark ? "#22c55e" : "#15803d", border: "1px solid", borderColor: isDark ? "rgba(34,197,94,0.3)" : "rgba(34,197,94,0.3)" }}>
+                        {newlyCreatedKey}
+                      </code>
+                      <button
+                        onClick={copyToClipboard}
+                        className="flex items-center gap-2 px-4 py-3 rounded-xl text-[13px]"
+                        style={{ fontFamily: HF, fontWeight: 300, background: copied ? "#22c55e" : (isDark ? "#fff" : "#0a0a0a"), color: copied ? "#fff" : (isDark ? "#000" : "#fff") }}
+                      >
+                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                        {copied ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={copyToClipboard}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-[14px]"
+                      style={{ fontFamily: HF, fontWeight: 300, background: "#22c55e", color: "#fff" }}
+                    >
+                      {copied ? <Check size={18} /> : <Copy size={18} />}
+                      {copied ? 'Copied to Clipboard' : 'Copy Key'}
+                    </button>
+                    <button
+                      onClick={closeKeyModal}
+                      className="px-6 py-3 rounded-full text-[14px]"
+                      style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", color: isDark ? "#fff" : "#0a0a0a" }}
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

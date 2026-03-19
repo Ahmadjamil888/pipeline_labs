@@ -76,7 +76,7 @@ export default function HomePage() {
                 Get Started <ArrowRight size={16} />
               </button>
             </Link>
-            <Link href="/docs">
+            <Link href="https://pipeline.stldocs.app">
               <button className="px-8 py-4 rounded-full text-[14px] border" style={{ fontFamily: HF, fontWeight: 300, borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)", color: isDark ? "#fff" : "#0a0a0a" }}>
                 Documentation
               </button>
@@ -177,7 +177,7 @@ export default function HomePage() {
           </Link>
 
           <div className="flex items-center justify-center gap-8">
-            <Link href="/docs" className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>Docs</Link>
+            <Link href="https://pipeline.stldocs.app" className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>Docs</Link>
             <Link href="/dashboard" className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>Dashboard</Link>
             <Link href="/login" className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>Login</Link>
           </div>

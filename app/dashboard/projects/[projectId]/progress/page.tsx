@@ -1,8 +1,10 @@
+"use client";
+
 // Frontend Progress Screen
 // React component to display live deployment status.
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://pipeline-backend-staging.up.railway.app";
 

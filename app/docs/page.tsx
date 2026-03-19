@@ -1,482 +1,312 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { useTheme } from "@/app/theme-provider";
-import { ThemeToggle } from "@/app/theme-toggle";
 import { 
-  ChevronRight, 
-  Copy, 
-  Check, 
-  Server, 
-  GitBranch, 
-  Rocket, 
-  Activity,
-  Terminal,
-  ArrowLeft
+  ArrowRight, 
+  Book, 
+  Code, 
+  Terminal, 
+  Zap,
+  Shield,
+  CheckCircle,
+  ExternalLink,
+  Copy,
+  Check,
 } from "lucide-react";
-
-const HF = "'Helvetica World', Helvetica, Arial, sans-serif";
-
-const apiSections = [
-  {
-    title: "Repositories",
-    icon: GitBranch,
-    description: "Connect and analyze Git repositories",
-    endpoints: [
-      {
-        method: "POST",
-        path: "/repos/connect",
-        summary: "Connect a Git repository",
-        description: "Connect a Git repository from GitHub or GitLab to the platform",
-        requestBody: {
-          repo_url: "https://github.com/user/my-monorepo",
-          provider: "github",
-          branch: "main",
-          name: "my-monorepo"
-        },
-        response: {
-          id: "uuid",
-          repo_url: "https://github.com/user/my-monorepo",
-          provider: "github",
-          branch: "main",
-          name: "my-monorepo",
-          status: "connected",
-          created_at: "2024-01-01T00:00:00Z"
-        }
-      },
-      {
-        method: "POST",
-        path: "/repos/{repo_id}/analyze",
-        summary: "Analyze repository structure",
-        description: "Creates a Daytona workspace, clones the repository, and runs AI analysis to detect frameworks, services, and recommend deployment platforms.",
-        response: {
-          repo_id: "uuid",
-          services: [
-            {
-              name: "frontend",
-              framework: "nextjs",
-              path: "frontend/",
-              language: "typescript",
-              recommended_platform: "vercel",
-              build_command: "npm run build",
-              start_command: "npm start"
-            }
-          ],
-          is_monorepo: true,
-          analyzed_at: "2024-01-01T00:00:00Z",
-          sandbox_id: "uuid"
-        }
-      },
-      {
-        method: "GET",
-        path: "/repos/{repo_id}",
-        summary: "Get repository details",
-        response: "Returns RepoConnection object"
-      }
-    ]
-  },
-  {
-    title: "Deployments",
-    icon: Rocket,
-    description: "Manage application deployments",
-    endpoints: [
-      {
-        method: "GET",
-        path: "/deployments",
-        summary: "List all deployments",
-        parameters: ["status", "repo_id", "limit", "offset"],
-        response: {
-          deployments: [],
-          total: 0,
-          limit: 20,
-          offset: 0
-        }
-      },
-      {
-        method: "POST",
-        path: "/deployments",
-        summary: "Create deployment plan",
-        requestBody: {
-          repo_id: "uuid",
-          services: [
-            {
-              name: "frontend",
-              path: "frontend/",
-              platform: "vercel"
-            }
-          ],
-          environment: "production",
-          branch: "main"
-        },
-        response: {
-          id: "uuid",
-          repo_id: "uuid",
-          status: "planned",
-          services: [],
-          created_at: "2024-01-01T00:00:00Z"
-        }
-      },
-      {
-        method: "GET",
-        path: "/deployments/{deployment_id}",
-        summary: "Get deployment status",
-        response: {
-          id: "uuid",
-          repo_id: "uuid",
-          status: "running",
-          services: [],
-          started_at: "2024-01-01T00:00:00Z"
-        }
-      },
-      {
-        method: "POST",
-        path: "/deployments/{deployment_id}/run",
-        summary: "Execute deployment",
-        description: "Execute the deployment in a Daytona sandbox. This will: 1) Start the sandbox, 2) Run build commands, 3) Deploy services to Vercel/Render, 4) Track deployment status",
-        response: {
-          deployment_id: "uuid",
-          status: "running",
-          message: "Deployment execution started",
-          estimated_duration_seconds: 180
-        }
-      },
-      {
-        method: "POST",
-        path: "/deployments/{deployment_id}/cancel",
-        summary: "Cancel deployment",
-        response: { message: "Deployment cancelled" }
-      },
-      {
-        method: "GET",
-        path: "/deployments/{deployment_id}/logs",
-        summary: "Get deployment logs",
-        parameters: ["tail", "since"],
-        response: {
-          deployment_id: "uuid",
-          logs: [],
-          timestamp: "2024-01-01T00:00:00Z"
-        }
-      }
-    ]
-  },
-  {
-    title: "Sandboxes",
-    icon: Terminal,
-    description: "Manage Daytona workspaces",
-    endpoints: [
-      {
-        method: "GET",
-        path: "/sandboxes",
-        summary: "List all sandboxes",
-        parameters: ["status", "limit"],
-        response: {
-          sandboxes: [],
-          total: 0
-        }
-      },
-      {
-        method: "POST",
-        path: "/sandboxes",
-        summary: "Create sandbox",
-        description: "Create a new Daytona workspace for isolated execution",
-        requestBody: {
-          repo_id: "uuid",
-          repo_url: "https://github.com/user/repo",
-          branch: "main",
-          resources: {
-            cpu_cores: 2,
-            memory_mb: 4096,
-            disk_gb: 20
-          }
-        },
-        response: {
-          id: "uuid",
-          status: "creating",
-          workspace_url: "https://workspace.daytona.io",
-          created_at: "2024-01-01T00:00:00Z"
-        }
-      },
-      {
-        method: "GET",
-        path: "/sandboxes/{sandbox_id}",
-        summary: "Get sandbox details",
-        response: "Returns Sandbox object"
-      },
-      {
-        method: "DELETE",
-        path: "/sandboxes/{sandbox_id}",
-        summary: "Destroy sandbox",
-        description: "Destroy the Daytona workspace and free resources"
-      },
-      {
-        method: "POST",
-        path: "/sandboxes/{sandbox_id}/start",
-        summary: "Start sandbox",
-        response: { status: "running" }
-      },
-      {
-        method: "POST",
-        path: "/sandboxes/{sandbox_id}/stop",
-        summary: "Stop sandbox",
-        response: { status: "stopped" }
-      },
-      {
-        method: "POST",
-        path: "/sandboxes/{sandbox_id}/execute",
-        summary: "Execute command in sandbox",
-        requestBody: {
-          command: "npm install",
-          working_directory: "/workspace",
-          timeout_seconds: 300
-        },
-        response: {
-          exit_code: 0,
-          stdout: "...",
-          stderr: "",
-          duration_ms: 5000
-        }
-      }
-    ]
-  },
-  {
-    title: "System",
-    icon: Activity,
-    description: "Health and system status",
-    endpoints: [
-      {
-        method: "GET",
-        path: "/health",
-        summary: "Health check",
-        response: {
-          status: "healthy",
-          timestamp: "2024-01-01T00:00:00Z",
-          version: "1.0.0",
-          services: {
-            database: "healthy",
-            sandbox_service: "healthy"
-          }
-        }
-      }
-    ]
-  }
-];
-
-const methodColors: Record<string, string> = {
-  GET: "#22c55e",
-  POST: "#3b82f6",
-  PUT: "#f59e0b",
-  DELETE: "#ef4444",
-  PATCH: "#8b5cf6"
-};
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 export default function DocsPage() {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-  const [expandedSection, setExpandedSection] = useState<string | null>("Repositories");
-  const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
+  const [copied, setCopied] = React.useState(false);
 
-  const copyToClipboard = (text: string, endpoint: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedEndpoint(endpoint);
-    setTimeout(() => setCopiedEndpoint(null), 2000);
+  const copyCommand = (cmd: string) => {
+    navigator.clipboard.writeText(cmd);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="min-h-screen" style={{ background: isDark ? "#050505" : "#fafafa" }}>
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 border-b" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "rgba(5,5,5,0.9)" : "rgba(250,250,250,0.9)", backdropFilter: "blur(12px)" }}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="relative w-8 h-8">
-                <Image src={isDark ? "/logo-dark.png" : "/logo-light.png"} alt="Pipeline AI" fill className="object-contain" />
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="space-y-4">
+        <Badge variant="secondary" className="text-xs">Documentation v1.0</Badge>
+        <h1 className="text-4xl font-bold tracking-tight">Pipeline Labs Documentation</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl">
+          Build, deploy, and scale your applications with AI-powered DevOps automation. 
+          Deploy to Vercel and Render with zero configuration.
+        </p>
+      </div>
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Link href="/docs/installation">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">
+            <CardHeader className="pb-3">
+              <Terminal className="h-5 w-5 text-primary mb-2" />
+              <CardTitle className="text-lg">Installation</CardTitle>
+              <CardDescription>Get started with our Python SDK</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-sm text-primary">
+                <span>pip install pipeline_labs</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
               </div>
-              <span style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "#fff" : "#0a0a0a" }}>Pipeline AI</span>
-            </Link>
-            <span style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}>/</span>
-            <span style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>API Documentation</span>
-          </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <Link href="/dashboard">
-              <button className="px-5 py-2 rounded-full text-[13px]" style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#000" : "#fff" }}>
-                Dashboard
-              </button>
-            </Link>
-          </div>
-        </div>
-      </header>
+        <Link href="/docs/quickstart">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">
+            <CardHeader className="pb-3">
+              <Zap className="h-5 w-5 text-primary mb-2" />
+              <CardTitle className="text-lg">Quick Start</CardTitle>
+              <CardDescription>Deploy your first app in 5 minutes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-sm text-primary">
+                Start building
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-      {/* Content */}
-      <div className="pt-24 pb-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Hero */}
-          <div className="mb-12">
-            <h1 className="text-4xl md:text-5xl mb-4" style={{ fontFamily: HF, fontWeight: 200, color: isDark ? "#fff" : "#0a0a0a" }}>
-              API Reference
-            </h1>
-            <p className="text-lg max-w-2xl" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
-              Complete reference for the Pipeline AI DevOps Platform API. 
-              Base URL: <code className="px-2 py-1 rounded" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", fontFamily: "monospace" }}>http://localhost:8000/api/v1</code>
-            </p>
-          </div>
+        <Link href="/docs/api-keys">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer h-full">
+            <CardHeader className="pb-3">
+              <Shield className="h-5 w-5 text-primary mb-2" />
+              <CardTitle className="text-lg">API Keys</CardTitle>
+              <CardDescription>Authenticate and secure your requests</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-sm text-primary">
+                Learn more
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
 
-          {/* Authentication */}
-          <div className="mb-8 p-6 rounded-2xl border" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
-            <h2 className="text-xl mb-3" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "#fff" : "#0a0a0a" }}>
-              Authentication
-            </h2>
-            <p className="text-[13px] mb-3" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>
-              All API endpoints require Bearer authentication using a JWT token.
-            </p>
-            <div className="p-3 rounded-xl" style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}>
-              <code className="text-[12px]" style={{ fontFamily: "monospace", color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}>
-                Authorization: Bearer {'<your_jwt_token>'}
-              </code>
+      {/* SDK Installation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="h-5 w-5" />
+            SDK Installation
+          </CardTitle>
+          <CardDescription>
+            Install our official Python SDK to interact with the Pipeline Labs API
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Tabs defaultValue="pip" className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsTrigger value="pip">pip</TabsTrigger>
+              <TabsTrigger value="poetry">Poetry</TabsTrigger>
+              <TabsTrigger value="conda">Conda</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="pip" className="mt-4">
+              <div className="relative">
+                <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+                  <code className="text-sm">pip install pipeline_labs</code>
+                </pre>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={() => copyCommand("pip install pipeline_labs")}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="poetry" className="mt-4">
+              <div className="relative">
+                <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+                  <code className="text-sm">poetry add pipeline_labs</code>
+                </pre>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={() => copyCommand("poetry add pipeline_labs")}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="conda" className="mt-4">
+              <div className="relative">
+                <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+                  <code className="text-sm">conda install -c conda-forge pipeline_labs</code>
+                </pre>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={() => copyCommand("conda install -c conda-forge pipeline_labs")}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="space-y-4">
+            <h3 className="font-semibold">Quick Start Example</h3>
+            <div className="relative">
+              <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
+                <code>{`from pipeline_labs import PipelineClient
+
+# Initialize client with your API key
+client = PipelineClient(api_key="your_api_key")
+
+# Connect a repository
+repo = client.repos.connect(
+    repo_url="https://github.com/username/repo",
+    provider="github"
+)
+
+# Analyze the repository
+analysis = client.repos.analyze(repo_id=repo.id)
+print(f"Detected {len(analysis.services)} services")
+
+# Deploy all services
+for service in analysis.services:
+    deployment = client.deployments.create(
+        repo_id=repo.id,
+        service_name=service.name,
+        platform=service.recommended_platform
+    )
+    print(f"Deploying {service.name} to {deployment.url}")`}</code>
+              </pre>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={() => copyCommand(`from pipeline_labs import PipelineClient
+
+client = PipelineClient(api_key="your_api_key")
+repo = client.repos.connect(repo_url="https://github.com/username/repo")
+analysis = client.repos.analyze(repo_id=repo.id)
+deployment = client.deployments.create(repo_id=repo.id, service_name="app")`)}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* API Sections */}
-          <div className="space-y-4">
-            {apiSections.map((section) => {
-              const isExpanded = expandedSection === section.title;
-              const Icon = section.icon;
-              
-              return (
-                <div 
-                  key={section.title}
-                  className="rounded-2xl border overflow-hidden"
-                  style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}
-                >
-                  {/* Section Header */}
-                  <button
-                    onClick={() => setExpandedSection(isExpanded ? null : section.title)}
-                    className="w-full flex items-center justify-between p-5 text-left"
-                    style={{ background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
-                      >
-                        <Icon size={20} style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }} />
-                      </div>
-                      <div>
-                        <h3 className="text-lg" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "#fff" : "#0a0a0a" }}>
-                          {section.title}
-                        </h3>
-                        <p className="text-[12px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
-                          {section.description}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight 
-                      size={20} 
-                      className={`transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                      style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}
-                    />
-                  </button>
+      {/* Features Grid */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Core Features</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CardTitle className="text-lg">AI-Powered Analysis</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Automatically detect frameworks, services, and dependencies in your repository.
+                Supports Next.js, React, Python, Go, and more.
+              </p>
+            </CardContent>
+          </Card>
 
-                  {/* Endpoints */}
-                  {isExpanded && (
-                    <div className="border-t" style={{ borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}>
-                      {section.endpoints.map((endpoint, idx) => (
-                        <div 
-                          key={idx}
-                          className="p-5 border-b last:border-b-0"
-                          style={{ borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <span 
-                                className="px-2 py-1 rounded text-[11px] font-mono"
-                                style={{ 
-                                  background: `${methodColors[endpoint.method]}20`,
-                                  color: methodColors[endpoint.method],
-                                  fontWeight: 600
-                                }}
-                              >
-                                {endpoint.method}
-                              </span>
-                              <code 
-                                className="text-[13px] font-mono"
-                                style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}
-                              >
-                                {endpoint.path}
-                              </code>
-                            </div>
-                            <button
-                              onClick={() => copyToClipboard(`${endpoint.method} ${endpoint.path}`, `${endpoint.method}-${endpoint.path}`)}
-                              className="p-2 rounded-lg transition-all"
-                              style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}
-                            >
-                              {copiedEndpoint === `${endpoint.method}-${endpoint.path}` ? (
-                                <Check size={14} style={{ color: "#22c55e" }} />
-                              ) : (
-                                <Copy size={14} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }} />
-                              )}
-                            </button>
-                          </div>
-                          
-                          <h4 className="text-[14px] mb-1" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "#fff" : "#0a0a0a" }}>
-                            {endpoint.summary}
-                          </h4>
-                          {'description' in endpoint && endpoint.description && (
-                            <p className="text-[12px] mb-3" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
-                              {endpoint.description}
-                            </p>
-                          )}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CardTitle className="text-lg">Multi-Platform Deploy</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Deploy frontend apps to Vercel and backend services to Render.
+                Zero configuration required.
+              </p>
+            </CardContent>
+          </Card>
 
-                          {/* Request Body */}
-                          {'requestBody' in endpoint && endpoint.requestBody && (
-                            <div className="mt-3">
-                              <div className="text-[11px] uppercase tracking-wider mb-2" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}>
-                                Request Body
-                              </div>
-                              <pre 
-                                className="p-3 rounded-xl overflow-x-auto text-[12px]"
-                                style={{ 
-                                  background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                                  fontFamily: "monospace",
-                                  color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)"
-                                }}
-                              >
-                                {JSON.stringify(endpoint.requestBody, null, 2)}
-                              </pre>
-                            </div>
-                          )}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CardTitle className="text-lg">Auto Error Fixing</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                When deployments fail, our AI agent analyzes logs, suggests fixes,
+                and can automatically apply patches to your repository.
+              </p>
+            </CardContent>
+          </Card>
 
-                          {/* Response */}
-                          {endpoint.response && (
-                            <div className="mt-3">
-                              <div className="text-[11px] uppercase tracking-wider mb-2" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}>
-                                Response
-                              </div>
-                              <pre 
-                                className="p-3 rounded-xl overflow-x-auto text-[12px]"
-                                style={{ 
-                                  background: isDark ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.1)",
-                                  fontFamily: "monospace",
-                                  color: isDark ? "#22c55e" : "#22c55e"
-                                }}
-                              >
-                                {typeof endpoint.response === 'string' 
-                                  ? endpoint.response 
-                                  : JSON.stringify(endpoint.response, null, 2)
-                                }
-                              </pre>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CardTitle className="text-lg">Real-time Progress</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Track deployment progress with live updates via Server-Sent Events.
+                See exactly what's happening at each step.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* API Reference Link */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="flex items-center justify-between p-6">
+          <div className="space-y-1">
+            <h3 className="font-semibold text-lg">API Reference</h3>
+            <p className="text-sm text-muted-foreground">
+              Explore the complete API documentation with interactive examples
+            </p>
+          </div>
+          <Link href="/docs/api">
+            <Button>
+              View API Docs
+              <ExternalLink className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+
+      {/* Support Section */}
+      <div className="border-t pt-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="font-semibold">Need Help?</h3>
+            <p className="text-sm text-muted-foreground">
+              Can't find what you're looking for? Contact our support team.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <a href="mailto:ahmadjamildhami@gmail.com">Contact Support</a>
+            </Button>
+            <Button variant="outline" asChild>
+              <a href="https://github.com/Ahmadjamil888/pipeline_labs" target="_blank" rel="noopener noreferrer">
+                GitHub
+              </a>
+            </Button>
           </div>
         </div>
       </div>

@@ -46,7 +46,7 @@ client = PipelineClient(api_key="your_api_key")
 plans = client.billing.get_plans()
 
 for plan in plans:
-    print(f"{plan.name}: ${plan.price}/month")
+    print(f"{plan.name}: \${plan.price}/month")
     print(f"  Features: {', '.join(plan.features)}")`}</code>
               </pre>
               <Button

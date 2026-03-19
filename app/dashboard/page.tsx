@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/app/supabase-client'
 import RepoDrawer from '@/app/components/repo-drawer'
 import { useTheme } from '@/app/theme-provider'
@@ -25,6 +26,9 @@ export default function DashboardPage() {
   const supabase = createClient()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const searchParams = useSearchParams()
+  const githubConnected = searchParams.get('github_connected')
+  const githubError = searchParams.get('github_error')
   const [user, setUser] = useState<any>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [profile, setProfile] = useState<any>(null)
@@ -32,6 +36,7 @@ export default function DashboardPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [plan, setPlan] = useState<PlanType>('free')
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -47,15 +52,15 @@ export default function DashboardPage() {
 
       setProfile(profileData)
 
-      // Get organization to check plan
-      const { data: orgData } = await supabase
-        .from('organizations')
+      // Get organization plan from subscriptions table
+      const { data: subData } = await supabase
+        .from('subscriptions')
         .select('plan')
-        .eq('owner_id', profileData?.id)
+        .eq('user_id', user.id)
         .single()
       
-      if (orgData) {
-        setPlan(orgData.plan as PlanType)
+      if (subData) {
+        setPlan(subData.plan as PlanType)
       }
 
       const { data: projectsData } = await supabase
@@ -66,9 +71,29 @@ export default function DashboardPage() {
 
       setProjects(projectsData || [])
       setLoading(false)
+
+      // Handle return from GitHub OAuth
+      if (githubConnected === 'true') {
+        setToast('GitHub connected successfully!')
+        setDrawerOpen(true) // auto-open drawer so they can pick a repo
+        // Clean URL
+        window.history.replaceState({}, '', '/dashboard')
+      }
+
+      if (githubError === 'true') {
+        setToast('Failed to connect GitHub. Please try again.')
+        window.history.replaceState({}, '', '/dashboard')
+      }
     }
     load()
   }, [supabase])
+
+  // Auto-hide toast after 4 seconds
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   // Calculate stats
   const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'complete' || p.status === 'analyzed').length
@@ -90,6 +115,26 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto" style={{ fontFamily: HF }}>
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          background: isDark ? '#18181b' : 'white',
+          color: isDark ? 'white' : '#18181b',
+          padding: '12px 20px',
+          borderRadius: 10,
+          fontSize: 13,
+          fontWeight: 500,
+          zIndex: 100,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          animation: 'fadein 0.2s ease',
+          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e4e4e7',
+        }}>
+          {toast}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

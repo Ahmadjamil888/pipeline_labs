@@ -40,7 +40,15 @@ export default function ConnectRepoPage() {
     // Check for GitHub App callback
     const params = new URLSearchParams(window.location.search)
     const connected = params.get("connected") || params.get("github_connected")
+    const projectId = params.get("project_id")
     const instId = params.get('installation_id')
+    
+    // If someone lands here with github_connected but no project_id
+    // redirect them to dashboard — wrong page
+    if (connected && !projectId) {
+      window.location.href = '/dashboard?github_connected=true'
+      return
+    }
     
     if (connected === "true" || connected === "1") {
       if (instId) {

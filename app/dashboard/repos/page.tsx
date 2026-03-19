@@ -52,6 +52,17 @@ export default function ReposPage() {
       
       if (profileData) setProfile(profileData)
 
+      // Get organization plan from subscriptions table
+      const { data: subData } = await supabase
+        .from('subscriptions')
+        .select('plan')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (subData) {
+        setPlan(subData.plan as PlanType)
+      }
+
       const { data } = await supabase
         .from('projects')
         .select('*')

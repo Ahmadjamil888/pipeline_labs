@@ -36,13 +36,13 @@ export default function ConnectRepoPage() {
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
-  // Check for GitHub App callback
   useEffect(() => {
+    // Check for GitHub App callback
     const params = new URLSearchParams(window.location.search)
+    const connected = params.get("connected") || params.get("github_connected")
     const instId = params.get('installation_id')
-    const connected = params.get('connected')
     
-    if (instId && connected === 'true') {
+    if (connected === "true" || connected === "1") {
       setInstallationId(parseInt(instId))
       setStep('loading')
       fetchRepos(parseInt(instId))

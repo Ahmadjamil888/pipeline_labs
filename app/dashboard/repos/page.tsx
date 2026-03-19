@@ -5,7 +5,9 @@ import { createClient } from "@/app/supabase-client"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Github, Plus, ArrowRight, ExternalLink, Trash2, RefreshCw } from "lucide-react"
+import { canCreateProject, getProjectLimitMessage, PlanType } from '@/app/lib/plan-limits'
 import { useTheme } from "@/app/theme-provider"
+import RepoDrawer from "@/app/components/repo-drawer"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
 
@@ -22,35 +24,58 @@ interface Project {
 export default function ReposPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [plan, setPlan] = useState<PlanType>('free')
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const router = useRouter()
   const supabase = createClient()
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
   useEffect(() => {
-    async function fetchProjects() {
+    async function fetchData() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
       }
+      setUser(user)
+
+      // Get profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (profileData) setProfile(profileData)
 
       const { data } = await supabase
         .from('projects')
         .select('*')
-        .eq('owner_id', user.id)
+        .eq('owner_id', profileData?.id || user.id)
         .order('created_at', { ascending: false })
 
       if (data) setProjects(data)
       setLoading(false)
     }
-    fetchProjects()
+    fetchData()
   }, [supabase, router])
 
   const deleteProject = async (id: string) => {
     if (!confirm('Are you sure you want to delete this project?')) return
     await supabase.from('projects').delete().eq('id', id)
     setProjects(projects.filter(p => p.id !== id))
+  }
+
+  const handleConnectClick = () => {
+    if (!canCreateProject(plan, projects.length)) {
+      setShowUpgradeModal(true)
+      return
+    }
+    setDrawerOpen(true)
   }
 
   return (
@@ -64,12 +89,14 @@ export default function ReposPage() {
             Manage your connected repositories
           </p>
         </div>
-        <Link href="/dashboard/repos/connect">
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px]" style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#000" : "#fff" }}>
-            <Plus size={16} />
-            Connect Repository
-          </button>
-        </Link>
+        <button 
+          onClick={handleConnectClick}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px]" 
+          style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#000" : "#fff" }}
+        >
+          <Plus size={16} />
+          Connect Repository
+        </button>
       </div>
 
       {loading ? (
@@ -85,11 +112,13 @@ export default function ReposPage() {
           <p className="mb-6" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
             Connect your first repository to start deploying
           </p>
-          <Link href="/dashboard/repos/connect">
-            <button className="px-5 py-2.5 rounded-full text-[13px]" style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#000" : "#fff" }}>
-              Connect Repository
-            </button>
-          </Link>
+          <button 
+            onClick={handleConnectClick}
+            className="px-5 py-2.5 rounded-full text-[13px]" 
+            style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#000" : "#fff" }}
+          >
+            Connect Repository
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -126,6 +155,83 @@ export default function ReposPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {drawerOpen && (
+        <RepoDrawer
+          userId={user?.id}
+          profileId={profile?.id}
+          onClose={() => setDrawerOpen(false)}
+          onConnected={(projectId) => {
+            setDrawerOpen(false)
+            router.push(`/dashboard/repos/connect?project_id=${projectId}`)
+          }}
+        />
+      )}
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.6)',
+          zIndex: 100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+        }}>
+          <div style={{
+            background: isDark ? '#0a0a0a' : 'white',
+            borderRadius: 16,
+            padding: '2rem',
+            maxWidth: 400,
+            width: '100%',
+            border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e4e4e7',
+          }}>
+            <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12, color: isDark ? '#fff' : '#0a0a0a', fontFamily: HF }}>
+              Project Limit Reached
+            </h3>
+            <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.6)' : '#71717a', marginBottom: 24, fontFamily: HF }}>
+              {getProjectLimitMessage(plan)}
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  background: isDark ? 'rgba(255,255,255,0.1)' : '#f4f4f5',
+                  color: isDark ? '#fff' : '#0a0a0a',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  fontFamily: HF,
+                }}
+              >
+                Cancel
+              </button>
+              <Link href="/dashboard/billing">
+                <button
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: isDark ? '#fff' : '#18181b',
+                    color: isDark ? '#000' : 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    fontFamily: HF,
+                  }}
+                >
+                  Upgrade Plan
+                </button>
+              </Link>
+            </div>
+          </div>
         </div>
       )}
     </div>

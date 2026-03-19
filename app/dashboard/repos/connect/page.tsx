@@ -43,9 +43,11 @@ export default function ConnectRepoPage() {
     const instId = params.get('installation_id')
     
     if (connected === "true" || connected === "1") {
-      setInstallationId(parseInt(instId))
-      setStep('loading')
-      fetchRepos(parseInt(instId))
+      if (instId) {
+        setInstallationId(parseInt(instId))
+        setStep('loading')
+        fetchRepos(parseInt(instId))
+      }
     }
   }, [])
 

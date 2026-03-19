@@ -1,217 +1,196 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/app/supabase-client"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { 
-  FolderGit, 
-  Rocket, 
-  Activity,
-  Plus,
-  Github,
-  CheckCircle2,
-  User,
-  ArrowRight
-} from "lucide-react"
-import { useTheme } from "@/app/theme-provider"
+import { useEffect, useState } from 'react'
+import { createClient } from '@/app/supabase-client'
+import RepoDrawer from '@/app/components/repo-drawer'
+import { useTheme } from '@/app/theme-provider'
+import Link from 'next/link'
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pipeline-ai-labs-by-ahmad.up.railway.app'
 
 interface Project {
   id: string
   name: string
   repo_url: string
   status: string
+  provider: string
   created_at: string
-}
-
-interface Deployment {
-  id: string
-  project_id: string
-  status: string
-  created_at: string
-}
-
-interface UserProfile {
-  id: string
-  email: string
-  full_name: string
-  avatar_url?: string
+  detected_services_count: number
+  is_monorepo: boolean
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    projects: 0,
-    deployments: 0,
-    active: 0
-  })
-  const [projects, setProjects] = useState<Project[]>([])
-  const [deployments, setDeployments] = useState<Deployment[]>([])
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
   const supabase = createClient()
   const { theme } = useTheme()
-  
-  const isDark = theme === "dark"
+  const isDark = theme === 'dark'
+  const [user, setUser] = useState<any>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (!user || !session) {
-          router.push('/login')
-          return
-        }
-        setUser(user)
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setUser(user)
 
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
-        
-        if (profileData) setProfile(profileData)
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
 
-        const { data: projectsData } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('owner_id', user.id)
-          .order('created_at', { ascending: false })
+      setProfile(profileData)
 
-        if (projectsData) {
-          setProjects(projectsData)
-          const activeCount = projectsData.filter(p => p.status === 'active').length
-          setStats(prev => ({ ...prev, projects: projectsData.length, active: activeCount }))
-        }
+      const { data: projectsData } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('owner_id', profileData?.id)
+        .order('created_at', { ascending: false })
 
-        const deploymentsRes = await fetch(`${API_URL}/api/v1/deployments`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => null)
-
-        if (deploymentsRes?.ok) {
-          const deploymentsData = await deploymentsRes.json()
-          setDeployments(deploymentsData.deployments || [])
-          setStats(prev => ({ ...prev, deployments: deploymentsData.total || 0 }))
-        }
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error)
-      } finally {
-        setLoading(false)
-      }
+      setProjects(projectsData || [])
+      setLoading(false)
     }
-    fetchData()
-  }, [supabase, router])
+    load()
+  }, [supabase])
+
+  const statusColor: Record<string, string> = {
+    pending:   isDark ? '#71717a' : '#71717a',
+    connected: '#3b82f6',
+    analyzing: '#f59e0b',
+    analyzed:  '#10b981',
+    complete:  '#10b981',
+    deploying: '#f59e0b',
+    error:     '#ef4444',
+  }
+
+  const statusBg: Record<string, string> = {
+    pending:   isDark ? 'rgba(113,113,122,0.1)' : 'rgba(113,113,122,0.1)',
+    connected: 'rgba(59,130,246,0.1)',
+    analyzing: 'rgba(245,158,11,0.1)',
+    analyzed:  'rgba(16,185,129,0.1)',
+    complete:  'rgba(16,185,129,0.1)',
+    deploying: 'rgba(245,158,11,0.1)',
+    error:     'rgba(239,68,68,0.1)',
+  }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between mb-8">
+    <div style={{ fontFamily: HF, maxWidth: 900, margin: '0 auto', padding: '2.5rem 2rem' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
         <div>
-          <h1 className="text-3xl mb-2" style={{ fontFamily: HF, fontWeight: 200, color: isDark ? "#fff" : "#0a0a0a" }}>
-            {profile?.full_name ? `Welcome, ${profile.full_name}` : 'Dashboard'}
-          </h1>
-          <p className="text-sm" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
-            {profile?.email || user?.email || 'Overview of your DevOps projects'}
+          <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 4, color: isDark ? '#fff' : '#0a0a0a' }}>Projects</h1>
+          <p style={{ fontSize: 14, color: isDark ? 'rgba(255,255,255,0.5)' : '#71717a' }}>
+            {projects.length} project{projects.length !== 1 ? 's' : ''} connected
           </p>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3 px-4 py-2 rounded-full border" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
-              <User size={16} style={{ color: isDark ? "#fff" : "#0a0a0a" }} />
-            </div>
-            <span className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "#fff" : "#0a0a0a" }}>
-              {profile?.full_name || user?.email?.split('@')[0] || 'User'}
-            </span>
-          </div>
-
-          <Link href="/dashboard/repos/connect">
-            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] transition-all" style={{ fontFamily: HF, fontWeight: 300, background: isDark ? "#fff" : "#0a0a0a", color: isDark ? "#000" : "#fff" }}>
-              <Plus size={16} />
-              New Project
-            </button>
-          </Link>
-        </div>
+        <button
+          onClick={() => setDrawerOpen(true)}
+          style={{
+            padding: '9px 18px',
+            background: isDark ? '#fff' : '#18181b',
+            color: isDark ? '#000' : 'white',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 500,
+            cursor: 'pointer',
+            fontFamily: HF,
+          }}
+        >
+          + Connect repository
+        </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <Link href="/dashboard/repos">
-          <div className="p-6 rounded-2xl border transition-all hover:scale-[1.02]" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>Projects</span>
-              <FolderGit size={18} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }} />
-            </div>
-            <div className="text-3xl" style={{ fontFamily: HF, fontWeight: 200, color: isDark ? "#fff" : "#0a0a0a" }}>{loading ? '...' : stats.projects}</div>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/deployments">
-          <div className="p-6 rounded-2xl border transition-all hover:scale-[1.02]" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>Deployments</span>
-              <Rocket size={18} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }} />
-            </div>
-            <div className="text-3xl" style={{ fontFamily: HF, fontWeight: 200, color: isDark ? "#fff" : "#0a0a0a" }}>{loading ? '...' : stats.deployments}</div>
-          </div>
-        </Link>
-
-        <div className="p-6 rounded-2xl border" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[13px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>Active</span>
-            <Activity size={18} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }} />
-          </div>
-          <div className="text-3xl" style={{ fontFamily: HF, fontWeight: 200, color: isDark ? "#fff" : "#0a0a0a" }}>{loading ? '...' : stats.active}</div>
+      {/* Projects grid */}
+      {loading ? (
+        <div style={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#71717a', fontSize: 14 }}>Loading projects...</div>
+      ) : projects.length === 0 ? (
+        <div style={{
+          border: `1px dashed ${isDark ? 'rgba(255,255,255,0.2)' : '#e4e4e7'}`,
+          borderRadius: 12,
+          padding: '3rem',
+          textAlign: 'center',
+          background: isDark ? 'rgba(255,255,255,0.02)' : 'transparent',
+        }}>
+          <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 8, color: isDark ? '#fff' : '#0a0a0a' }}>No projects yet</p>
+          <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.5)' : '#71717a', marginBottom: 20 }}>
+            Connect a GitHub repository to get started.
+          </p>
+          <button
+            onClick={() => setDrawerOpen(true)}
+            style={{
+              padding: '9px 18px',
+              background: isDark ? '#fff' : '#18181b',
+              color: isDark ? '#000' : 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 13,
+              cursor: 'pointer',
+              fontFamily: HF,
+            }}
+          >
+            Connect repository
+          </button>
         </div>
-      </div>
-
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl" style={{ fontFamily: HF, fontWeight: 200, color: isDark ? "#fff" : "#0a0a0a" }}>Recent Projects</h2>
-          <Link href="/dashboard/repos">
-            <span className="text-[13px] flex items-center gap-1" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>View all <ArrowRight size={14} /></span>
-          </Link>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {projects.map((p) => (
+            <Link
+              key={p.id}
+              href={`/dashboard/repos/${p.id}`}
+              style={{
+                display: 'block',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e4e4e7'}`,
+                borderRadius: 12,
+                padding: '18px 20px',
+                textDecoration: 'none',
+                color: 'inherit',
+                transition: 'border-color 0.15s',
+                background: isDark ? 'rgba(255,255,255,0.02)' : 'transparent',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: isDark ? '#fff' : '#0a0a0a' }}>{p.name}</p>
+                <span style={{
+                  fontSize: 11,
+                  padding: '2px 8px',
+                  borderRadius: 20,
+                  background: statusBg[p.status] || statusBg.pending,
+                  color: statusColor[p.status] || statusColor.pending,
+                  fontWeight: 500,
+                }}>
+                  {p.status}
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.5)' : '#71717a', marginBottom: 8 }}>
+                {p.repo_url?.replace('https://github.com/', '')}
+              </p>
+              <div style={{ display: 'flex', gap: 12, fontSize: 11, color: isDark ? 'rgba(255,255,255,0.4)' : '#71717a' }}>
+                {p.detected_services_count > 0 && (
+                  <span>{p.detected_services_count} service{p.detected_services_count !== 1 ? 's' : ''}</span>
+                )}
+                {p.is_monorepo && <span>monorepo</span>}
+                <span>{new Date(p.created_at).toLocaleDateString()}</span>
+              </div>
+            </Link>
+          ))}
         </div>
-        
-        {projects.length === 0 ? (
-          <div className="p-8 rounded-2xl border text-center" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
-            <p style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
-              No projects yet. <Link href="/dashboard/repos/connect" style={{ color: isDark ? "#fff" : "#0a0a0a" }}>Create your first project</Link>
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {projects.slice(0, 5).map((project) => (
-              <Link key={project.id} href={`/dashboard/repos/${project.id}`}>
-                <div className="flex items-center justify-between p-5 rounded-2xl border transition-all hover:scale-[1.01]" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}>
-                      <Github size={20} style={{ color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }} />
-                    </div>
-                    <div>
-                      <div className="text-[14px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "#fff" : "#0a0a0a" }}>{project.name}</div>
-                      <div className="text-[12px]" style={{ fontFamily: HF, fontWeight: 300, color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}>{project.repo_url}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px]" style={{ fontFamily: HF, fontWeight: 300, background: project.status === 'active' ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.1)", color: project.status === 'active' ? "#22c55e" : isDark ? "#fff" : "#0a0a0a" }}>
-                      <CheckCircle2 size={12} /> {project.status}
-                    </span>
-                    <ArrowRight size={16} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }} />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
+
+      {/* Repo drawer */}
+      {drawerOpen && (
+        <RepoDrawer
+          userId={user?.id}
+          profileId={profile?.id}
+          onClose={() => setDrawerOpen(false)}
+          onConnected={(projectId) => {
+            setDrawerOpen(false)
+            window.location.href = `/dashboard/repos/connect?project_id=${projectId}`
+          }}
+        />
+      )}
     </div>
   )
 }

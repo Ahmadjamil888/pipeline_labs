@@ -37,6 +37,7 @@ export default function SettingsPage() {
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [showKeyId, setShowKeyId] = useState<string | null>(null)
+  const [profileId, setProfileId] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchProfile() {
@@ -46,30 +47,30 @@ export default function SettingsPage() {
         return
       }
 
-      const { data } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
-      if (data) {
-        setFullName(data.full_name || '')
+      if (profile) {
+        setFullName(profile.full_name || '')
         setEmail(user.email || '')
+        setProfileId(profile.id)
+        // Fetch API keys using profile.id (owner_id)
+        await fetchApiKeys(profile.id)
       }
-      
-      // Fetch API keys
-      await fetchApiKeys(user.id)
       
       setLoading(false)
     }
     fetchProfile()
   }, [supabase, router])
 
-  const fetchApiKeys = async (userId: string) => {
+  const fetchApiKeys = async (ownerId: string) => {
     const { data, error } = await supabase
       .from('api_keys')
       .select('*')
-      .eq('user_id', userId)
+      .eq('owner_id', ownerId)
       .order('created_at', { ascending: false })
     
     if (!error && data) {
@@ -99,11 +100,9 @@ export default function SettingsPage() {
   }
 
   const generateApiKey = async () => {
-    if (!newKeyName.trim()) return
+    if (!newKeyName.trim() || !profileId) return
     
     setGeneratingKey(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
 
     // Generate secure API key
     const fullKey = generateSecureApiKey()
@@ -114,7 +113,7 @@ export default function SettingsPage() {
     const { data, error } = await supabase
       .from('api_keys')
       .insert({
-        user_id: user.id,
+        owner_id: profileId,
         name: newKeyName.trim(),
         key_hash: keyHash,
         key_preview: fullKey.slice(0, 8) + '...' + fullKey.slice(-4),

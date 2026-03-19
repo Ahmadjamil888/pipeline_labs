@@ -31,7 +31,7 @@ const navigation = [
   { name: "Organizations", href: "/dashboard/orgs", icon: Building2 },
   { name: "Providers", href: "/dashboard/providers", icon: Cloud },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
-  { name: "API Docs", href: "/docs", icon: FileCode },
+  { name: "API Docs", href: "https://pipeline.stldocs.app/", icon: FileCode, external: true },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
@@ -105,20 +105,39 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="space-y-1">
             {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-full transition-all"
-                style={{
-                  fontFamily: HF,
-                  fontWeight: 300,
-                  fontSize: "13px",
-                  color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
-                }}
-              >
-                <item.icon size={18} />
-                <span>{item.name}</span>
-              </Link>
+              item.external ? (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-full transition-all"
+                  style={{
+                    fontFamily: HF,
+                    fontWeight: 300,
+                    fontSize: "13px",
+                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
+                  }}
+                >
+                  <item.icon size={18} />
+                  <span>{item.name}</span>
+                </a>
+              ) : (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-full transition-all"
+                  style={{
+                    fontFamily: HF,
+                    fontWeight: 300,
+                    fontSize: "13px",
+                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
+                  }}
+                >
+                  <item.icon size={18} />
+                  <span>{item.name}</span>
+                </Link>
+              )
             ))}
           </div>
         </nav>

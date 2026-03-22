@@ -10,7 +10,6 @@ import { useTheme } from "@/app/theme-provider"
 import { 
   LayoutDashboard, 
   FolderGit, 
-  Cloud, 
   CreditCard, 
   FileCode, 
   Settings, 
@@ -28,7 +27,6 @@ const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Projects", href: "/dashboard/repos", icon: FolderGit },
-  { name: "Providers", href: "/dashboard/providers", icon: Cloud },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { name: "API Docs", href: "https://pipeline.stldocs.app/", icon: FileCode, external: true },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },

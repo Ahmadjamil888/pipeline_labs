@@ -75,9 +75,9 @@ export default function DashboardPage() {
       // Handle return from GitHub OAuth
       if (githubConnected === 'true') {
         setToast('GitHub connected successfully!')
-        setDrawerOpen(true) // auto-open drawer so they can pick a repo
-        // Clean URL
         window.history.replaceState({}, '', '/dashboard')
+        // Small delay before opening drawer to allow DB write to complete
+        setTimeout(() => setDrawerOpen(true), 800)
       }
 
       if (githubError === 'true') {

@@ -4,9 +4,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pipeline-ai-labs-by-
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { deploy_id: string } }
+  { params }: { params: Promise<{ deploy_id: string }> }
 ) {
-  const { deploy_id } = params
+  const { deploy_id } = await params
   const url = `${API_URL}/api/v1/deployments/${deploy_id}${request.nextUrl.search}`
 
   try {

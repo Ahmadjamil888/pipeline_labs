@@ -4,9 +4,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pipeline-ai-labs-by-
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { model_id: string; path: string[] } }
+  { params }: { params: Promise<{ model_id: string; path: string[] }> }
 ) {
-  const { model_id, path } = params
+  const { model_id, path } = await params
   const fullPath = path.join('/')
   const url = `${API_URL}/api/v1/models/${model_id}/${fullPath}${request.nextUrl.search}`
 
@@ -49,9 +49,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { model_id: string; path: string[] } }
+  { params }: { params: Promise<{ model_id: string; path: string[] }> }
 ) {
-  const { model_id, path } = params
+  const { model_id, path } = await params
   const fullPath = path.join('/')
   const url = `${API_URL}/api/v1/models/${model_id}/${fullPath}`
 
@@ -98,16 +98,16 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { model_id: string; path: string[] } }
+  { params }: { params: Promise<{ model_id: string; path: string[] }> }
 ) {
   return POST(request, { params })
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { model_id: string; path: string[] } }
+  { params }: { params: Promise<{ model_id: string; path: string[] }> }
 ) {
-  const { model_id, path } = params
+  const { model_id, path } = await params
   const fullPath = path.join('/')
   const url = `${API_URL}/api/v1/models/${model_id}/${fullPath}`
 

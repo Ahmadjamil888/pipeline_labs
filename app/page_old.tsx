@@ -578,8 +578,8 @@ export default function HomePage() {
                 <GitBranch className="h-6 w-6 text-white" />
               </div>
               <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fff" : "#000" }}>
-              Seamless Integration
-            </h2>
+                Seamless Integration
+              </h2>
             </div>
             <p className="text-xl max-w-3xl mx-auto leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#64748b" }}>
               Integrate with your existing tools and workflows. GitHub, GitLab, Slack, Discord, and more.

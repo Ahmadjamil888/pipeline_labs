@@ -223,12 +223,14 @@ function CheckItem({ children }: { children: React.ReactNode }) {
 ───────────────────────────────────────────── */
 function Logo({ theme, height = 28, fallbackId = "nav-logo-fb" }: { theme: Theme; height?: number; fallbackId?: string }) {
   const src = theme === "dark" ? "/logo-dark.png" : "/logo-light.png";
+  console.log("Logo component - theme:", theme, "src:", src); // Debug log
   return (
     <img
       src={src}
       alt="Pipeline Labs"
       style={{ height, objectFit: "contain", display: "block" }}
       onError={(e) => {
+        console.error("Logo failed to load:", src, e);
         (e.target as HTMLImageElement).style.display = "none";
         const fb = document.getElementById(fallbackId);
         if (fb) fb.style.display = "flex";

@@ -10,14 +10,13 @@ type Theme = "dark" | "light";
    GLOBAL STYLES (injected once)
 ───────────────────────────────────────────── */
 const GLOBAL_CSS = `
-  @import url('https://fonts.cdnfonts.com/css/helvetica-neue-9');
   @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
   body {
-    font-family: 'HelveticaWorld', 'Helvetica Neue', 'Helvetica', Arial, sans-serif !important;
+    font-family: 'Helvetica Neue', 'HelveticaNeue', Helvetica, Arial, sans-serif !important;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
@@ -135,7 +134,7 @@ function GlobalStyle() {
    DESIGN TOKENS
 ───────────────────────────────────────────── */
 const T = {
-  font: "'HelveticaWorld', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+  font: "'Helvetica Neue', 'HelveticaNeue', Helvetica, Arial, sans-serif",
   mono: "'Source Code Pro', 'Fira Code', 'Consolas', monospace",
   pill: "9999px",
 };
@@ -223,33 +222,13 @@ function CheckItem({ children }: { children: React.ReactNode }) {
    LOGO COMPONENT
 ───────────────────────────────────────────── */
 function Logo({ theme, height = 28, fallbackId = "nav-logo-fb" }: { theme: Theme; height?: number; fallbackId?: string }) {
-  const src = theme === "dark" ? "https://github.com/Ahmadjamil888/pipeline_labs/blob/main/public/logo-dark.png" : "https://github.com/Ahmadjamil888/pipeline_labs/blob/main/public/logo-light.png";
+  const src = theme === "dark" ? "/public/logo-dark.png" : "/public/logo-light.png";
   return (
-    <>
-      <img
-        src={src}
-        alt="Pipeline Labs"
-        style={{ height, objectFit: "contain", display: "block" }}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = "none";
-          const fb = document.getElementById(fallbackId);
-          if (fb) fb.style.display = "flex";
-        }}
-      />
-      <span id={fallbackId} style={{
-        display: "none", alignItems: "center", gap: 7,
-        fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px",
-        color: "var(--text)", fontFamily: T.font,
-      }}>
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-          <rect x="1" y="1" width="9" height="9" rx="2" fill="var(--text)" />
-          <rect x="12" y="1" width="9" height="9" rx="2" fill="var(--text)" opacity="0.5" />
-          <rect x="1" y="12" width="9" height="9" rx="2" fill="var(--text)" opacity="0.3" />
-          <rect x="12" y="12" width="9" height="9" rx="2" fill="var(--text)" opacity="0.7" />
-        </svg>
-        Pipeline Labs
-      </span>
-    </>
+    <img
+      src={src}
+      alt="Pipeline Labs"
+      style={{ height, objectFit: "contain", display: "block" }}
+    />
   );
 }
 
@@ -590,11 +569,14 @@ function VideoSection() {
           position: "relative",
         }}>
           <video
-            autoPlay muted loop playsInline
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          >
-            <source src="https://github.com/Ahmadjamil888/pipeline_labs/blob/main/public/hero-bg-video.mp4" type="video/mp4" />
-          </video>
+            src="/public/hero-bg-video.mp4"
+          />
           <div style={{
             position: "absolute", inset: 0,
             background: "linear-gradient(to bottom, transparent 70%, var(--bg) 100%)",
@@ -683,7 +665,8 @@ print(f"Deploy started: {deploy.id}")
 
 # Monitor deployment health
 health = client.deployments.health(deploy.id)
-print(f"Status: {health.status} | P99: {health.p99_ms}ms")`;
+print(f"Status: {health.status} | P99: {health.p99_ms}ms")
+`;
 
 type Token = { type: string; value: string };
 
@@ -800,23 +783,8 @@ function CodeHighlight({ code }: { code: string }) {
   );
 }
 
-const OUTPUT_LINES = [
-  { delay: 0,    text: "$ python deploy.py", color: "#a3a3a3" },
-  { delay: 600,  text: "  Connecting to Pipeline Labs...", color: "#546e7a" },
-  { delay: 1200, text: "  ✓ Authenticated as workspace/acme-corp", color: "#c3e88d" },
-  { delay: 1800, text: "", color: "" },
-  { delay: 2100, text: "  deploy-a1b2c3: running", color: "#a3a3a3" },
-  { delay: 2200, text: "  deploy-d4e5f6: succeeded", color: "#a3a3a3" },
-  { delay: 2300, text: "  deploy-g7h8i9: pending", color: "#a3a3a3" },
-  { delay: 2400, text: "", color: "" },
-  { delay: 2700, text: "  Deploy started: deploy-x9y8z7", color: "#82aaff" },
-  { delay: 3200, text: "  Status: running | P99: 38ms", color: "#c3e88d" },
-];
-
 function SDKSection() {
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [outputVisible, setOutputVisible] = useState<number[]>([]);
-  const [running, setRunning] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
 
@@ -825,17 +793,6 @@ function SDKSection() {
       highlightRef.current.scrollTop = textareaRef.current.scrollTop;
       highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
     }
-  };
-
-  const runCode = () => {
-    setRunning(true);
-    setOutputVisible([]);
-    OUTPUT_LINES.forEach((line, i) => {
-      setTimeout(() => {
-        setOutputVisible((prev) => [...prev, i]);
-        if (i === OUTPUT_LINES.length - 1) setRunning(false);
-      }, line.delay);
-    });
   };
 
   const lineCount = code.split("\n").length;
@@ -884,9 +841,9 @@ function SDKSection() {
               padding: "12px 18px",
               display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
-              <span style={{ fontFamily: T.mono, fontSize: 13, color: "#c3e88d" }}>pip install pipeline-labs</span>
+              <span style={{ fontFamily: T.mono, fontSize: 13, color: "#c3e88d" }}>pip install pipeline_labs</span>
               <button
-                onClick={() => navigator.clipboard?.writeText("pip install pipeline-labs")}
+                onClick={() => navigator.clipboard?.writeText("pip install pipeline_labs")}
                 style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.3)", padding: 4 }}
                 title="Copy"
               >
@@ -901,199 +858,109 @@ function SDKSection() {
           </div>
         </div>
 
-        {/* Editor + Output */}
+        {/* Editor — full width, single pane */}
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
           borderRadius: 14, overflow: "hidden",
           border: "1px solid rgba(255,255,255,.08)",
           boxShadow: "0 40px 80px rgba(0,0,0,.55)",
         }}>
-          {/* ── Editor pane ── */}
-          <div style={{ background: "#1e1e2e", display: "flex", flexDirection: "column", borderRight: "1px solid rgba(255,255,255,.07)" }}>
-            {/* Titlebar */}
-            <div style={{
-              background: "#181825", display: "flex", alignItems: "center",
-              padding: "0 14px", height: 38,
-              borderBottom: "1px solid rgba(255,255,255,.06)",
-              gap: 8,
-            }}>
-              <div style={{ display: "flex", gap: 6 }}>
-                {["#ff5f57","#febc2e","#28c840"].map((c,i) => (
-                  <div key={i} style={{ width: 10.5, height: 10.5, borderRadius: "50%", background: c }} />
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 2, marginLeft: 8 }}>
-                {[["deploy.py", true]].map(([label, active], i) => (
-                  <div key={i} style={{
-                    padding: "4px 12px", borderRadius: "6px 6px 0 0",
-                    background: active ? "#1e1e2e" : "transparent",
-                    fontSize: 12, color: active ? "rgba(255,255,255,.82)" : "rgba(255,255,255,.38)",
-                    fontFamily: T.mono,
-                  }}>
-                    {label as string}
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ fontSize: 10.5, color: "rgba(255,255,255,.28)", fontFamily: T.mono }}>Python</span>
-              </div>
+          {/* Titlebar */}
+          <div style={{
+            background: "#181825", display: "flex", alignItems: "center",
+            padding: "0 14px", height: 38,
+            borderBottom: "1px solid rgba(255,255,255,.06)",
+            gap: 8,
+          }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["#ff5f57","#febc2e","#28c840"].map((c,i) => (
+                <div key={i} style={{ width: 10.5, height: 10.5, borderRadius: "50%", background: c }} />
+              ))}
             </div>
-
-            {/* Code area */}
-            <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-              {/* Line numbers */}
+            <div style={{ display: "flex", gap: 2, marginLeft: 8 }}>
               <div style={{
-                width: 44, flexShrink: 0,
+                padding: "4px 12px", borderRadius: "6px 6px 0 0",
                 background: "#1e1e2e",
-                borderRight: "1px solid rgba(255,255,255,.04)",
-                padding: "20px 0",
-                userSelect: "none",
-                display: "flex", flexDirection: "column", alignItems: "flex-end",
+                fontSize: 12, color: "rgba(255,255,255,.82)",
+                fontFamily: T.mono,
               }}>
-                {Array.from({ length: lineCount }, (_, i) => (
-                  <div key={i} style={{
-                    height: "1.75em", lineHeight: "1.75",
-                    fontSize: 12, color: "rgba(255,255,255,.2)",
-                    paddingRight: 10, fontFamily: T.mono,
-                    minWidth: 30, textAlign: "right",
-                  }}>
-                    {i + 1}
-                  </div>
-                ))}
-              </div>
-
-              {/* Editor */}
-              <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
-                <div
-                  ref={highlightRef as any}
-                  style={{
-                    position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                    overflow: "auto", padding: "20px 24px",
-                    fontFamily: T.mono, fontSize: 13, lineHeight: 1.75,
-                    pointerEvents: "none", zIndex: 1,
-                    color: "#eeffff",
-                  }}
-                >
-                  <CodeHighlight code={code} />
-                </div>
-                <textarea
-                  ref={textareaRef}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  onScroll={syncScroll}
-                  className="code-editor-textarea"
-                  spellCheck={false}
-                  style={{
-                    position: "absolute", top: 0, left: 0,
-                    width: "100%", height: "100%",
-                    background: "transparent",
-                    color: "transparent",
-                    caretColor: "#fff",
-                    border: "none", outline: "none",
-                    resize: "none",
-                    padding: "20px 24px",
-                    fontFamily: T.mono, fontSize: 13, lineHeight: 1.75,
-                    zIndex: 2,
-                    overflow: "auto",
-                    whiteSpace: "pre",
-                  }}
-                />
+                deploy.py
               </div>
             </div>
-
-            {/* Bottom bar */}
-            <div style={{
-              background: "#181825", borderTop: "1px solid rgba(255,255,255,.06)",
-              padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "space-between",
-            }}>
-              <div style={{ display: "flex", gap: 14, fontSize: 11, color: "rgba(255,255,255,.3)", fontFamily: T.font }}>
-                <span>Ln {lineCount}</span>
-                <span>UTF-8</span>
-              </div>
-              <button
-                onClick={runCode}
-                disabled={running}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  background: running ? "rgba(255,255,255,.1)" : "#28c840",
-                  color: running ? "rgba(255,255,255,.5)" : "#0a0a0a",
-                  border: "none", borderRadius: 6, padding: "5px 14px",
-                  fontSize: 12, fontWeight: 700, cursor: running ? "not-allowed" : "pointer",
-                  fontFamily: T.font, transition: "background 0.2s",
-                }}
-              >
-                {running ? (
-                  <>
-                    <div className="spin" style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.3)", borderTopColor: "#fff" }} />
-                    Running…
-                  </>
-                ) : (
-                  <>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                    Run
-                  </>
-                )}
-              </button>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 10.5, color: "rgba(255,255,255,.28)", fontFamily: T.mono }}>Python</span>
             </div>
           </div>
 
-          {/* ── Output pane ── */}
-          <div style={{ background: "#0d0d1a", display: "flex", flexDirection: "column" }}>
+          {/* Code area */}
+          <div style={{ background: "#1e1e2e", display: "flex" }}>
+            {/* Line numbers */}
             <div style={{
-              background: "#0a0a16", height: 38,
-              display: "flex", alignItems: "center", padding: "0 16px",
-              borderBottom: "1px solid rgba(255,255,255,.06)",
-              gap: 8,
+              width: 52, flexShrink: 0,
+              background: "#1e1e2e",
+              borderRight: "1px solid rgba(255,255,255,.04)",
+              padding: "20px 0",
+              userSelect: "none",
             }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2">
-                <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
-              </svg>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,.4)", fontFamily: T.font }}>Output</span>
-              {outputVisible.length > 0 && (
-                <button
-                  onClick={() => setOutputVisible([])}
-                  style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.25)", fontSize: 11, fontFamily: T.font }}
-                >Clear</button>
-              )}
+              {Array.from({ length: lineCount }, (_, i) => (
+                <div key={i} style={{
+                  height: "1.75em", lineHeight: "1.75",
+                  fontSize: 13, color: "rgba(255,255,255,.2)",
+                  paddingRight: 12, fontFamily: T.mono,
+                  textAlign: "right",
+                }}>
+                  {i + 1}
+                </div>
+              ))}
             </div>
 
-            <div style={{
-              flex: 1, padding: "20px 20px",
-              fontFamily: T.mono, fontSize: 12.5, lineHeight: 1.85,
-              overflowY: "auto",
-            }}>
-              {outputVisible.length === 0 && !running && (
-                <div style={{ color: "rgba(255,255,255,.18)", fontStyle: "italic", fontSize: 12, fontFamily: T.font }}>
-                  Press Run to execute your script…
-                </div>
-              )}
-              {OUTPUT_LINES.map((line, i) =>
-                outputVisible.includes(i) ? (
-                  <div key={i} style={{ color: line.color || "transparent", minHeight: "1.85em" }}>
-                    {line.text}
-                  </div>
-                ) : null
-              )}
-              {running && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                  <div className="spin" style={{ width: 9, height: 9, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.2)", borderTopColor: "rgba(255,255,255,.7)" }} />
-                  <span style={{ color: "rgba(255,255,255,.3)", fontSize: 11.5, fontFamily: T.font }}>executing…</span>
-                </div>
-              )}
-            </div>
-
-            {/* Status bar */}
-            <div style={{
-              background: "#0a0a16", borderTop: "1px solid rgba(255,255,255,.06)",
-              padding: "6px 16px", display: "flex", alignItems: "center", gap: 14,
-              fontSize: 11, color: "rgba(255,255,255,.25)", fontFamily: T.font,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: outputVisible.length === OUTPUT_LINES.length ? "#28c840" : "rgba(255,255,255,.2)" }} />
-                {outputVisible.length === OUTPUT_LINES.length ? "Done" : "Idle"}
+            {/* Editor */}
+            <div style={{ position: "relative", flex: 1, minHeight: 420 }}>
+              <div
+                ref={highlightRef as any}
+                style={{
+                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                  overflow: "auto", padding: "20px 24px",
+                  fontFamily: T.mono, fontSize: 13, lineHeight: 1.75,
+                  pointerEvents: "none", zIndex: 1,
+                  color: "#eeffff",
+                }}
+              >
+                <CodeHighlight code={code} />
               </div>
-              <span>pipeline-labs v1.4.0</span>
+              <textarea
+                ref={textareaRef}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                onScroll={syncScroll}
+                spellCheck={false}
+                style={{
+                  position: "absolute", top: 0, left: 0,
+                  width: "100%", height: "100%",
+                  background: "transparent",
+                  color: "transparent",
+                  caretColor: "#fff",
+                  border: "none", outline: "none",
+                  resize: "none",
+                  padding: "20px 24px",
+                  fontFamily: T.mono, fontSize: 13, lineHeight: 1.75,
+                  zIndex: 2,
+                  overflow: "auto",
+                  whiteSpace: "pre",
+                  minHeight: 420,
+                }}
+              />
             </div>
+          </div>
+
+          {/* Bottom status bar */}
+          <div style={{
+            background: "#181825", borderTop: "1px solid rgba(255,255,255,.06)",
+            padding: "7px 14px", display: "flex", alignItems: "center", gap: 16,
+            fontSize: 11, color: "rgba(255,255,255,.25)", fontFamily: T.font,
+          }}>
+            <span>Ln {lineCount}</span>
+            <span>UTF-8</span>
+            <span style={{ marginLeft: "auto" }}>pipeline_labs v1.4.0</span>
           </div>
         </div>
       </div>

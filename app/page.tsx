@@ -222,7 +222,7 @@ function CheckItem({ children }: { children: React.ReactNode }) {
    LOGO COMPONENT
 ───────────────────────────────────────────── */
 function Logo({ theme, height = 28, fallbackId = "nav-logo-fb" }: { theme: Theme; height?: number; fallbackId?: string }) {
-  const src = theme === "dark" ? "/public/logo-dark.png" : "/public/logo-light.png";
+  const src = theme === "dark" ? "https://github.com/Ahmadjamil888/pipeline_labs/blob/main/public/logo-dark.png" : "https://github.com/Ahmadjamil888/pipeline_labs/blob/main/public/logo-light.png";
   return (
     <img
       src={src}
@@ -575,7 +575,7 @@ function VideoSection() {
             playsInline
             preload="auto"
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            src="/public/hero-bg-video.mp4"
+            src="https://github.com/Ahmadjamil888/pipeline_labs/blob/main/public/hero-bg-video.mp4"
           />
           <div style={{
             position: "absolute", inset: 0,

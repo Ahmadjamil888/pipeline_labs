@@ -67,23 +67,16 @@ export default function SettingsPage() {
   }, [supabase, router])
 
   const fetchApiKeys = async (ownerId: string) => {
-    console.log('fetchApiKeys called with ownerId:', ownerId)
-    try {
-      const { data, error } = await supabase
-        .from('api_keys')
-        .select('*')
-        .eq('owner_id', ownerId)
-        .order('created_at', { ascending: false })
-      
-      console.log('fetchApiKeys response:', { data, error })
-      
-      if (!error && data) {
-        setApiKeys(data)
-      } else if (error) {
-        console.error('fetchApiKeys error:', error)
-      }
-    } catch (err) {
-      console.error('fetchApiKeys exception:', err)
+    const { data, error } = await supabase
+      .from('api_keys')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
+    
+    if (!error && data) {
+      setApiKeys(data)
+    } else if (error) {
+      console.error('Error fetching API keys:', error)
     }
   }
 

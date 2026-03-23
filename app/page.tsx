@@ -1,5 +1,5 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 
 /* ─────────────────────────────────────────────
    TYPES
@@ -10,13 +10,13 @@ type Theme = "dark" | "light";
    GLOBAL STYLES (injected once)
 ───────────────────────────────────────────── */
 const GLOBAL_CSS = `
-  @import url('https://fonts.cdnfonts.com/css/helvetica-neue-9');
+  @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
   body {
-    font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif !important;
+    font-family: 'Helvetica Neue', 'HelveticaNeue', Helvetica, Arial, sans-serif !important;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
@@ -35,7 +35,6 @@ const GLOBAL_CSS = `
     --card:    #111111;
     --nav-bg:  rgba(10,10,10,0.82);
     --shadow:  0 32px 80px rgba(0,0,0,0.7);
-    --logo:    url('/public/logo-dark.png');
   }
 
   /* Light tokens */
@@ -52,7 +51,6 @@ const GLOBAL_CSS = `
     --card:    #ffffff;
     --nav-bg:  rgba(255,255,255,0.88);
     --shadow:  0 32px 80px rgba(0,0,0,0.08);
-    --logo:    url('/public/logo-light.png');
   }
 
   /* Marquee keyframes */
@@ -63,6 +61,7 @@ const GLOBAL_CSS = `
     from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
   .marquee-track { animation: marquee 32s linear infinite; }
   .marquee-section:hover .marquee-track { animation-play-state: paused; }
@@ -84,6 +83,41 @@ const GLOBAL_CSS = `
   .faq-answer.open {
     max-height: 300px;
   }
+
+  /* Code editor styles */
+  .code-editor-textarea {
+    caret-color: #fff;
+    resize: none;
+    outline: none;
+    border: none;
+    background: transparent;
+    color: transparent;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+    padding: 20px 24px;
+    font-family: 'Source Code Pro', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    letter-spacing: 0.01em;
+    z-index: 2;
+    white-space: pre;
+    overflow: auto;
+  }
+  .code-highlight {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    padding: 20px 24px;
+    font-family: 'Source Code Pro', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    white-space: pre;
+    z-index: 1;
+  }
 `;
 
 function GlobalStyle() {
@@ -97,11 +131,11 @@ function GlobalStyle() {
 }
 
 /* ─────────────────────────────────────────────
-   DESIGN TOKENS (JS mirror for inline styles)
+   DESIGN TOKENS
 ───────────────────────────────────────────── */
 const T = {
-  font: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-  mono: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+  font: "'Helvetica Neue', 'HelveticaNeue', Helvetica, Arial, sans-serif",
+  mono: "'Source Code Pro', 'Fira Code', 'Consolas', monospace",
   pill: "9999px",
 };
 
@@ -185,6 +219,25 @@ function CheckItem({ children }: { children: React.ReactNode }) {
 }
 
 /* ─────────────────────────────────────────────
+   LOGO COMPONENT
+───────────────────────────────────────────── */
+function Logo({ theme, height = 28, fallbackId = "nav-logo-fb" }: { theme: Theme; height?: number; fallbackId?: string }) {
+  const src = theme === "dark" ? "/logo-dark.png" : "/logo-light.png";
+  return (
+    <img
+      src={src}
+      alt="Pipeline Labs"
+      style={{ height, objectFit: "contain", display: "block" }}
+      onError={(e) => {
+        (e.target as HTMLImageElement).style.display = "none";
+        const fb = document.getElementById(fallbackId);
+        if (fb) fb.style.display = "flex";
+      }}
+    />
+  );
+}
+
+/* ─────────────────────────────────────────────
    NAV
 ───────────────────────────────────────────── */
 function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
@@ -194,6 +247,13 @@ function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
     window.addEventListener("scroll", h);
     return () => window.removeEventListener("scroll", h);
   }, []);
+
+  const navLinks = [
+    { label: "Product", href: "#product" },
+    { label: "How it works", href: "#how-it-works" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "Documentation", href: "https://pipeline.stldocs.app" },
+  ];
 
   return (
     <nav style={{
@@ -208,17 +268,8 @@ function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
       fontFamily: T.font,
     }}>
       {/* Logo */}
-      <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-        <img
-          src={theme === "dark" ? "/public/logo-dark.png" : "/public/logo-light.png"}
-          alt="Pipeline Labs"
-          style={{ height: 28, objectFit: "contain", display: "block" }}
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-            const fb = document.getElementById("nav-logo-fb");
-            if (fb) fb.style.display = "flex";
-          }}
-        />
+      <a href="#" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+        <Logo theme={theme} height={28} fallbackId="nav-logo-fb" />
         <span id="nav-logo-fb" style={{
           display: "none", alignItems: "center", gap: 7,
           fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px",
@@ -232,23 +283,27 @@ function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
           </svg>
           Pipeline Labs
         </span>
-      </Link>
+      </a>
 
       {/* Center links */}
       <ul style={{
         position: "absolute", left: "50%", transform: "translateX(-50%)",
         display: "flex", gap: 30, listStyle: "none", fontFamily: T.font,
       }}>
-        {["Product", "How it works", "Pricing", "Resources"].map((l) => (
-          <li key={l}>
-            <Link href={`#${l.toLowerCase().replace(/ /g, "-")}`} style={{
-              fontSize: 13.5, fontWeight: 400, color: "var(--text2)",
-              textDecoration: "none", letterSpacing: "-0.01em",
-              transition: "color 0.15s",
-            }}
+        {navLinks.map((l) => (
+          <li key={l.label}>
+            <a
+              href={l.href}
+              target={l.href.startsWith("http") ? "_blank" : undefined}
+              rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              style={{
+                fontSize: 13.5, fontWeight: 400, color: "var(--text2)",
+                textDecoration: "none", letterSpacing: "-0.01em",
+                transition: "color 0.15s",
+              }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text)")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text2)")}
-            >{l}</Link>
+            >{l.label}</a>
           </li>
         ))}
       </ul>
@@ -283,13 +338,13 @@ function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
           )}
         </button>
 
-        <Link href="/login" style={{
+        <a href="/login" style={{
           fontSize: 13, color: "var(--text2)", background: "none",
           border: "none", padding: "6px 12px", cursor: "pointer",
           fontFamily: T.font, fontWeight: 400, textDecoration: "none",
-        }}>Sign in</Link>
+        }}>Sign in</a>
 
-        <Link href="/contact" style={{
+        <a href="/contact" style={{
           fontSize: 13, fontWeight: 500, color: "var(--text)",
           background: "transparent", border: "1px solid var(--border2)",
           borderRadius: T.pill, padding: "6px 16px", cursor: "pointer",
@@ -297,9 +352,9 @@ function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
         }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = "var(--bg3)")}
           onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")}
-        >Contact sales</Link>
+        >Contact sales</a>
 
-        <Link href="/dashboard" style={{
+        <a href="/dashboard" style={{
           fontSize: 13, fontWeight: 500, color: "var(--bg)",
           background: "var(--text)", border: "none",
           borderRadius: T.pill, padding: "7px 20px", cursor: "pointer",
@@ -307,7 +362,7 @@ function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
         }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.opacity = "0.78")}
           onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.opacity = "1")}
-        >Get started</Link>
+        >Get started</a>
       </div>
     </nav>
   );
@@ -335,15 +390,15 @@ function Hero() {
           Pipeline Labs is the best way to ship with AI.
         </h1>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 60 }}>
-          <Link href="/pricing" style={{
+          <a href="/dashboard" style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "var(--text)", color: "var(--bg)",
             fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em",
             borderRadius: T.pill, padding: "11px 24px",
             border: "none", cursor: "pointer", textDecoration: "none",
             fontFamily: T.font, transition: "opacity 0.15s",
-          }}>Start free trial ↓</Link>
-          <Link href="#how-it-works" style={{
+          }}>Start free trial ↓</a>
+          <a href="#how-it-works" style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "transparent", color: "var(--text)",
             fontSize: 14, fontWeight: 500,
@@ -355,11 +410,11 @@ function Hero() {
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
             Watch demo
-          </Link>
+          </a>
         </div>
       </div>
 
-      {/* App shell bleeds off bottom */}
+      {/* App shell */}
       <div style={{ padding: "0 20px" }}>
         <div style={{
           background: "linear-gradient(145deg,#c8b89a 0%,#b0a088 30%,#907868 60%,#706050 100%)",
@@ -505,7 +560,7 @@ function Marquee() {
 }
 
 /* ─────────────────────────────────────────────
-   VIDEO SECTION  (full-width, own section)
+   VIDEO SECTION
 ───────────────────────────────────────────── */
 function VideoSection() {
   return (
@@ -515,14 +570,12 @@ function VideoSection() {
       borderBottom: "1px solid var(--border)",
     }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        {/* Section heading */}
         <div style={{ marginBottom: 48 }}>
           <Eyebrow>How Pipeline Labs works</Eyebrow>
           <SectionTitle>See the AI take over your pipeline</SectionTitle>
           <SubText>From the first git push to full production — watch every step happen automatically, in real time.</SubText>
         </div>
 
-        {/* Full-width video frame */}
         <div style={{
           width: "100%",
           aspectRatio: "16 / 9",
@@ -534,12 +587,19 @@ function VideoSection() {
           position: "relative",
         }}>
           <video
-            autoPlay muted loop playsInline
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          >
-            <source src="/public/hero-bg-video.mp4" type="video/mp4" />
-          </video>
-          {/* subtle bottom fade */}
+            src="/hero-bg-video.mp4"
+            onError={(e) => {
+              console.error("Video failed to load:", e);
+              // Optionally show a fallback background
+              (e.target as HTMLVideoElement).style.background = "var(--bg3)";
+            }}
+          />
           <div style={{
             position: "absolute", inset: 0,
             background: "linear-gradient(to bottom, transparent 70%, var(--bg) 100%)",
@@ -600,61 +660,330 @@ function HowItWorks() {
 }
 
 /* ─────────────────────────────────────────────
-   TERMINAL DEMO
+   SDK CODE EDITOR SECTION
 ───────────────────────────────────────────── */
-function TerminalDemo() {
+
+const DEFAULT_CODE = `from pipeline_labs import Pipeline
+
+# Initialize with your API key
+client = Pipeline(PIPELINE_API_KEY="your_api_key")
+
+# List your deployments
+deployments = client.deployments.list()
+for deployment in deployments.deployments:
+    print(f"{deployment.id}: {deployment.status}")
+
+# Trigger a new deployment
+deploy = client.deployments.create(
+    service="auth-service",
+    environment="production",
+    strategy="canary",
+    canary_percentage=15,
+    rollback_on={
+        "p99_latency_ms": 200,
+        "error_rate_percent": 1.5,
+    }
+)
+print(f"Deploy started: {deploy.id}")
+
+# Monitor deployment health
+health = client.deployments.health(deploy.id)
+print(f"Status: {health.status} | P99: {health.p99_ms}ms")
+`;
+
+type Token = { type: string; value: string };
+
+function tokenize(code: string): Token[] {
+  const tokens: Token[] = [];
+  const lines = code.split("\n");
+  const keywords = ["from","import","for","in","print","if","else","return","def","class","True","False","None","with","as","try","except","finally","raise","and","or","not","is","lambda","yield","global","nonlocal","del","pass","break","continue","while","assert"];
+  const builtins = ["Pipeline","list","create","health","str","int","float","bool","len","range","type","dict","set","tuple"];
+
+  for (let li = 0; li < lines.length; li++) {
+    if (li > 0) tokens.push({ type: "newline", value: "\n" });
+    const line = lines[li];
+    let i = 0;
+
+    while (i < line.length) {
+      // Comment
+      if (line[i] === "#") {
+        tokens.push({ type: "comment", value: line.slice(i) });
+        i = line.length;
+        continue;
+      }
+      // String
+      if (line[i] === '"' || line[i] === "'") {
+        const q = line[i];
+        let j = i + 1;
+        while (j < line.length && line[j] !== q) j++;
+        tokens.push({ type: "string", value: line.slice(i, j + 1) });
+        i = j + 1;
+        continue;
+      }
+      // f-string
+      if (line[i] === "f" && (line[i+1] === '"' || line[i+1] === "'")) {
+        const q = line[i+1];
+        let j = i + 2;
+        while (j < line.length && line[j] !== q) j++;
+        tokens.push({ type: "string", value: line.slice(i, j + 1) });
+        i = j + 1;
+        continue;
+      }
+      // Number
+      if (/[0-9]/.test(line[i])) {
+        let j = i;
+        while (j < line.length && /[0-9.]/.test(line[j])) j++;
+        tokens.push({ type: "number", value: line.slice(i, j) });
+        i = j;
+        continue;
+      }
+      // Identifier/keyword
+      if (/[a-zA-Z_]/.test(line[i])) {
+        let j = i;
+        while (j < line.length && /[a-zA-Z0-9_]/.test(line[j])) j++;
+        const word = line.slice(i, j);
+        if (keywords.includes(word)) tokens.push({ type: "keyword", value: word });
+        else if (builtins.includes(word)) tokens.push({ type: "builtin", value: word });
+        else tokens.push({ type: "ident", value: word });
+        i = j;
+        continue;
+      }
+      // Operator
+      if (/[=<>!+\-*\/|&^%~@]/.test(line[i])) {
+        tokens.push({ type: "operator", value: line[i] });
+        i++;
+        continue;
+      }
+      // Punctuation
+      if (/[()[\]{},.:;]/.test(line[i])) {
+        tokens.push({ type: "punct", value: line[i] });
+        i++;
+        continue;
+      }
+      // Space
+      if (line[i] === " ") {
+        let j = i;
+        while (j < line.length && line[j] === " ") j++;
+        tokens.push({ type: "space", value: line.slice(i, j) });
+        i = j;
+        continue;
+      }
+      tokens.push({ type: "other", value: line[i] });
+      i++;
+    }
+  }
+  return tokens;
+}
+
+const TOKEN_COLORS: Record<string, string> = {
+  keyword:  "#c792ea",
+  builtin:  "#82aaff",
+  string:   "#c3e88d",
+  comment:  "#546e7a",
+  number:   "#f78c6c",
+  operator: "#89ddff",
+  punct:    "#89ddff",
+  ident:    "#eeffff",
+  space:    "inherit",
+  newline:  "inherit",
+  other:    "#eeffff",
+};
+
+function CodeHighlight({ code }: { code: string }) {
+  const tokens = tokenize(code);
+  return (
+    <span className="code-highlight" style={{ color: "#eeffff" }}>
+      {tokens.map((tok, i) => {
+        if (tok.type === "newline") return "\n";
+        if (tok.type === "space") return tok.value;
+        return (
+          <span key={i} style={{ color: TOKEN_COLORS[tok.type] || "#eeffff" }}>
+            {tok.value}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function SDKSection() {
+  const [code, setCode] = useState(DEFAULT_CODE);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
+
+  const syncScroll = () => {
+    if (textareaRef.current && highlightRef.current) {
+      highlightRef.current.scrollTop = textareaRef.current.scrollTop;
+      highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  };
+
+  const lineCount = code.split("\n").length;
+
   return (
     <section style={{
       padding: "96px 0",
       borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
       background: "var(--bg2)",
     }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 44px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
-        <div>
-          <Eyebrow>Live intelligence</Eyebrow>
-          <SectionTitle>Talk to your infra<br />in plain English</SectionTitle>
-          <SubText style={{ marginBottom: 28 }}>Ask questions, trigger rollbacks, or request capacity changes via natural language — fully auditable.</SubText>
-          <Link href="/pricing" style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "var(--text)", color: "var(--bg)",
-            fontSize: 14, fontWeight: 500, borderRadius: T.pill, padding: "11px 24px",
-            textDecoration: "none", fontFamily: T.font,
-          }}>Get early access</Link>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 44px" }}>
+        {/* Header */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "flex-start", marginBottom: 44 }}>
+          <div>
+            <Eyebrow>SDK</Eyebrow>
+            <SectionTitle>Integrate in minutes,<br />deploy in seconds</SectionTitle>
+            <SubText style={{ marginBottom: 28 }}>
+              Pipeline Labs ships a first-class Python SDK. Authenticate once, then programmatically manage deployments, health checks, and rollbacks — all from your own scripts or CI.
+            </SubText>
+            <div style={{ display: "flex", gap: 10 }}>
+              <a
+                href="https://pipeline.stldocs.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "var(--text)", color: "var(--bg)",
+                  fontSize: 13.5, fontWeight: 500, borderRadius: T.pill, padding: "10px 22px",
+                  textDecoration: "none", fontFamily: T.font,
+                }}
+              >View SDK docs →</a>
+              <a href="/dashboard" style={{
+                display: "inline-flex", alignItems: "center",
+                background: "transparent", color: "var(--text)",
+                fontSize: 13.5, fontWeight: 500, borderRadius: T.pill, padding: "10px 22px",
+                border: "1px solid var(--border2)", textDecoration: "none", fontFamily: T.font,
+              }}>Get API key</a>
+            </div>
+          </div>
+
+          {/* Install pill */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{
+              background: "#0c0c0c", borderRadius: 10,
+              border: "1px solid rgba(255,255,255,.09)",
+              padding: "12px 18px",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <span style={{ fontFamily: T.mono, fontSize: 13, color: "#c3e88d" }}>pip install pipeline_labs</span>
+              <button
+                onClick={() => navigator.clipboard?.writeText("pip install pipeline_labs")}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,.3)", padding: 4 }}
+                title="Copy"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text3)", fontFamily: T.font, paddingLeft: 4 }}>
+              Requires Python 3.9+ · MIT License · 2.1k stars on GitHub
+            </div>
+          </div>
         </div>
 
-        {/* Terminal */}
+        {/* Editor — full width, single pane */}
         <div style={{
-          background: "#0c0c0c", borderRadius: 14,
-          border: "1px solid rgba(255,255,255,.07)",
-          overflow: "hidden",
+          borderRadius: 14, overflow: "hidden",
+          border: "1px solid rgba(255,255,255,.08)",
           boxShadow: "0 40px 80px rgba(0,0,0,.55)",
         }}>
-          <div style={{ background: "#161616", display: "flex", alignItems: "center", gap: 6, padding: "11px 14px", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
-            {["#ff5f57","#febc2e","#28c840"].map((c,i) => <div key={i} style={{ width: 10.5, height: 10.5, borderRadius: "50%", background: c }} />)}
-          </div>
-          <div style={{ padding: "22px", fontFamily: T.mono, fontSize: 12, lineHeight: 1.85 }}>
-            {[
-              [">","pipeline deploy main --env production","#f5f5f5",0],
-              ["","  ▸ Analyzing diff vs last release…","#4b5563",4],
-              ["","  ▸ Running pre-deploy health checks…","#4b5563",4],
-              ["","  ✓ All checks passed (4/4)","#a3a3a3",4],
-              ["","  ▸ Canary 5% → us-east-1…","#4b5563",4],
-              ["","  ✓ P99 latency stable at 38ms","#a3a3a3",4],
-              ["","  ✓ Deployed v2.4.1 in 47s","#d4d4d4",4],
-              [">","pipeline ask \"why did p95 spike?\"","#f5f5f5",10],
-              ["","  ⚡ Cold start on fn/auth-svc","#8a8a8a",4],
-              ["","  ▸ Auto-scaling rule updated","#4b5563",4],
-              ["","  ✓ Issue resolved automatically","#a3a3a3",4],
-            ].map(([pre, text, color, mt], i) => (
-              <div key={i} style={{ display: "flex", gap: 9, marginTop: mt as number }}>
-                {pre ? <span style={{ color: "#8a8a8a" }}>{pre}</span> : null}
-                <span style={{ color: color as string }}>{text as string}</span>
-              </div>
-            ))}
-            <div style={{ display: "flex", gap: 9, marginTop: 10 }}>
-              <span style={{ color: "#8a8a8a" }}>{">"}</span>
-              <span className="blink-cur" style={{ display: "inline-block", width: 7, height: 13, background: "#f5f5f5", borderRadius: 1, verticalAlign: -1 }} />
+          {/* Titlebar */}
+          <div style={{
+            background: "#181825", display: "flex", alignItems: "center",
+            padding: "0 14px", height: 38,
+            borderBottom: "1px solid rgba(255,255,255,.06)",
+            gap: 8,
+          }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["#ff5f57","#febc2e","#28c840"].map((c,i) => (
+                <div key={i} style={{ width: 10.5, height: 10.5, borderRadius: "50%", background: c }} />
+              ))}
             </div>
+            <div style={{ display: "flex", gap: 2, marginLeft: 8 }}>
+              <div style={{
+                padding: "4px 12px", borderRadius: "6px 6px 0 0",
+                background: "#1e1e2e",
+                fontSize: 12, color: "rgba(255,255,255,.82)",
+                fontFamily: T.mono,
+              }}>
+                deploy.py
+              </div>
+            </div>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 10.5, color: "rgba(255,255,255,.28)", fontFamily: T.mono }}>Python</span>
+            </div>
+          </div>
+
+          {/* Code area */}
+          <div style={{ background: "#1e1e2e", display: "flex" }}>
+            {/* Line numbers */}
+            <div style={{
+              width: 52, flexShrink: 0,
+              background: "#1e1e2e",
+              borderRight: "1px solid rgba(255,255,255,.04)",
+              padding: "20px 0",
+              userSelect: "none",
+            }}>
+              {Array.from({ length: lineCount }, (_, i) => (
+                <div key={i} style={{
+                  height: "1.75em", lineHeight: "1.75",
+                  fontSize: 13, color: "rgba(255,255,255,.2)",
+                  paddingRight: 12, fontFamily: T.mono,
+                  textAlign: "right",
+                }}>
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+
+            {/* Editor */}
+            <div style={{ position: "relative", flex: 1, minHeight: 420 }}>
+              <div
+                ref={highlightRef as any}
+                style={{
+                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                  overflow: "auto", padding: "20px 24px",
+                  fontFamily: T.mono, fontSize: 13, lineHeight: 1.75,
+                  pointerEvents: "none", zIndex: 1,
+                  color: "#eeffff",
+                }}
+              >
+                <CodeHighlight code={code} />
+              </div>
+              <textarea
+                ref={textareaRef}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                onScroll={syncScroll}
+                spellCheck={false}
+                style={{
+                  position: "absolute", top: 0, left: 0,
+                  width: "100%", height: "100%",
+                  background: "transparent",
+                  color: "transparent",
+                  caretColor: "#fff",
+                  border: "none", outline: "none",
+                  resize: "none",
+                  padding: "20px 24px",
+                  fontFamily: T.mono, fontSize: 13, lineHeight: 1.75,
+                  zIndex: 2,
+                  overflow: "auto",
+                  whiteSpace: "pre",
+                  minHeight: 420,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Bottom status bar */}
+          <div style={{
+            background: "#181825", borderTop: "1px solid rgba(255,255,255,.06)",
+            padding: "7px 14px", display: "flex", alignItems: "center", gap: 16,
+            fontSize: 11, color: "rgba(255,255,255,.25)", fontFamily: T.font,
+          }}>
+            <span>Ln {lineCount}</span>
+            <span>UTF-8</span>
+            <span style={{ marginLeft: "auto" }}>pipeline_labs v1.4.0</span>
           </div>
         </div>
       </div>
@@ -829,7 +1158,6 @@ function Pricing() {
         <SectionTitle style={{ margin: "0 auto 12px" }}>Simple, transparent pricing</SectionTitle>
         <SubText style={{ margin: "0 auto 32px" }}>Start free. Scale when you're ready. No surprise bills.</SubText>
 
-        {/* Toggle */}
         <div style={{
           display: "inline-flex", alignItems: "center",
           background: "var(--bg3)", border: "1px solid var(--border)",
@@ -890,7 +1218,7 @@ function Pricing() {
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
                 {plan.features.map((f) => <CheckItem key={f}>{f}</CheckItem>)}
               </ul>
-              <Link href="/pricing" style={{
+              <a href="/dashboard/billing" style={{
                 width: "100%", padding: 12, borderRadius: T.pill,
                 fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: T.font,
                 background: plan.featured ? "var(--text)" : "transparent",
@@ -900,7 +1228,7 @@ function Pricing() {
               }}
                 onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.opacity = "0.75")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.opacity = "1")}
-              >{plan.cta}</Link>
+              >{plan.cta}</a>
             </div>
           ))}
         </div>
@@ -977,18 +1305,18 @@ function CTABanner() {
         Join thousands of engineers who've handed their pipelines to AI — and never looked back.
       </p>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-        <Link href="/pricing" style={{
+        <a href="/dashboard" style={{
           display: "inline-flex", alignItems: "center", gap: 8,
           background: "var(--text)", color: "var(--bg)",
           fontSize: 14, fontWeight: 500, borderRadius: T.pill, padding: "11px 24px",
           textDecoration: "none", fontFamily: T.font,
-        }}>Start free trial — no card needed</Link>
-        <Link href="/contact" style={{
+        }}>Start free trial — no card needed</a>
+        <a href="/contact" style={{
           display: "inline-flex", alignItems: "center",
           background: "transparent", color: "var(--text)",
           fontSize: 14, fontWeight: 500, borderRadius: T.pill, padding: "11px 24px",
           border: "1px solid var(--border2)", textDecoration: "none", fontFamily: T.font,
-        }}>Talk to sales</Link>
+        }}>Talk to sales</a>
       </div>
     </section>
   );
@@ -997,11 +1325,34 @@ function CTABanner() {
 /* ─────────────────────────────────────────────
    FOOTER
 ───────────────────────────────────────────── */
-const FOOTER_LINKS: Record<string, string[]> = {
-  Product:    ["Features","Pricing","Changelog","Roadmap","Status"],
-  Developers: ["Documentation","API Reference","CLI","Integrations","Open source"],
-  Company:    ["About","Blog","Careers","Press","Contact"],
-  Legal:      ["Privacy","Terms","Security","Cookies"],
+const FOOTER_LINKS: Record<string, { label: string; href: string }[]> = {
+  Product:    [
+    { label: "Features", href: "#product" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "Changelog", href: "#" },
+    { label: "Roadmap", href: "#" },
+    { label: "Status", href: "#" },
+  ],
+  Developers: [
+    { label: "Documentation", href: "https://pipeline.stldocs.app" },
+    { label: "API Reference", href: "https://pipeline.stldocs.app" },
+    { label: "CLI", href: "#" },
+    { label: "Integrations", href: "#" },
+    { label: "Open source", href: "#" },
+  ],
+  Company:    [
+    { label: "About", href: "#" },
+    { label: "Blog", href: "#" },
+    { label: "Careers", href: "#" },
+    { label: "Press", href: "#" },
+    { label: "Contact", href: "/contact" },
+  ],
+  Legal:      [
+    { label: "Privacy", href: "#" },
+    { label: "Terms", href: "#" },
+    { label: "Security", href: "#" },
+    { label: "Cookies", href: "#" },
+  ],
 };
 
 function Footer({ theme }: { theme: Theme }) {
@@ -1011,18 +1362,9 @@ function Footer({ theme }: { theme: Theme }) {
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: 44, paddingBottom: 48, borderBottom: "1px solid var(--border)" }}>
           {/* Brand */}
           <div>
-            <img
-              src={theme === "dark" ? "/public/logo-dark.png" : "/public/logo-light.png"}
-              alt="Pipeline Labs"
-              style={{ height: 26, marginBottom: 14, objectFit: "contain" }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-                const el = document.getElementById("ft-logo-fb");
-                if (el) el.style.display = "block";
-              }}
-            />
+            <Logo theme={theme} height={26} fallbackId="ft-logo-fb" />
             <span id="ft-logo-fb" style={{ display: "none", fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px", color: "var(--text)", marginBottom: 14 }}>Pipeline Labs</span>
-            <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65, maxWidth: 240, marginBottom: 22 }}>
+            <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65, maxWidth: 240, marginBottom: 22, marginTop: 14 }}>
               AI-native DevOps that deploys, monitors, scales, and heals your infrastructure — autonomously.
             </p>
             <div style={{ display: "flex", gap: 8 }}>
@@ -1031,14 +1373,14 @@ function Footer({ theme }: { theme: Theme }) {
                 <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />,
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />,
               ].map((path, i) => (
-                <Link key={i} href="#" style={{
+                <a key={i} href="#" style={{
                   width: 32, height: 32, borderRadius: 7,
                   background: "var(--bg3)", border: "1px solid var(--border)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   color: "var(--text2)", textDecoration: "none",
                 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">{path}</svg>
-                </Link>
+                </a>
               ))}
             </div>
           </div>
@@ -1049,11 +1391,15 @@ function Footer({ theme }: { theme: Theme }) {
               <h4 style={{ fontSize: 11.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text3)", marginBottom: 14 }}>{heading}</h4>
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
                 {links.map((l) => (
-                  <li key={l}>
-                    <Link key={l} href="#" style={{ fontSize: 13, color: "var(--text2)", textDecoration: "none", transition: "color 0.15s" }}
+                  <li key={l.label}>
+                    <a
+                      href={l.href}
+                      target={l.href.startsWith("http") ? "_blank" : undefined}
+                      rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                      style={{ fontSize: 13, color: "var(--text2)", textDecoration: "none", transition: "color 0.15s" }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text)")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text2)")}
-                    >{l}</Link>
+                    >{l.label}</a>
                   </li>
                 ))}
               </ul>
@@ -1065,7 +1411,7 @@ function Footer({ theme }: { theme: Theme }) {
           <span style={{ fontSize: 12.5, color: "var(--text3)" }}>© 2026 Pipeline Labs, Inc. All rights reserved.</span>
           <div style={{ display: "flex", gap: 22 }}>
             {["Privacy","Terms","Security","Cookies"].map((l) => (
-              <Link key={l} href="#" style={{ fontSize: 12.5, color: "var(--text3)", textDecoration: "none" }}>{l}</Link>
+              <a key={l} href="#" style={{ fontSize: 12.5, color: "var(--text3)", textDecoration: "none" }}>{l}</a>
             ))}
           </div>
         </div>
@@ -1080,7 +1426,6 @@ function Footer({ theme }: { theme: Theme }) {
 export default function PipelineLabs() {
   const [theme, setTheme] = useState<Theme>("dark");
 
-  // Restore from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("pl-theme") as Theme | null;
     if (saved) { setTheme(saved); return; }
@@ -1088,7 +1433,6 @@ export default function PipelineLabs() {
     setTheme(preferLight ? "light" : "dark");
   }, []);
 
-  // Apply theme to <html>
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("pl-theme", theme);
@@ -1106,7 +1450,7 @@ export default function PipelineLabs() {
           <Marquee />
           <VideoSection />
           <HowItWorks />
-          <TerminalDemo />
+          <SDKSection />
           <Features />
           <Stats />
           <Testimonials />

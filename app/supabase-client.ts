@@ -6,6 +6,6 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'eyJhbGci
 export const createClient = () => {
     console.log('Creating Supabase client with URL:', SUPABASE_URL)
     const client = createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    console.log('Supabase client created:', client)
+    console.log('Supabase client created successfully')
     return client
 }

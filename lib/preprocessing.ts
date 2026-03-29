@@ -65,12 +65,30 @@ export async function parseFile(
 
 // Convert DataFrame to CSV
 export function dataframeToCsv(df: dfd.DataFrame): string {
-  return dfd.toCSV(df);
+  const result = dfd.toCSV(df);
+  if (typeof result === 'string') return result;
+  // Fallback: manually build CSV from values
+  const headers = df.columns.join(',');
+  const rows = (df.values as unknown[][]).map(row =>
+    row.map(v => (v === null || v === undefined ? '' : String(v))).join(',')
+  );
+  return [headers, ...rows].join('\n');
 }
 
 // Convert DataFrame to JSON
 export function dataframeToJson(df: dfd.DataFrame): unknown[] {
-  return df.toJSON();
+  const result = df.toJSON();
+  if (Array.isArray(result)) return result;
+  // toJSON can return object of column arrays — convert to row objects
+  if (result && typeof result === 'object') {
+    const cols = Object.keys(result as Record<string, unknown[]>);
+    const data = result as Record<string, unknown[]>;
+    const len = data[cols[0]]?.length ?? 0;
+    return Array.from({ length: len }, (_, i) =>
+      Object.fromEntries(cols.map(c => [c, data[c][i]]))
+    );
+  }
+  return [];
 }
 
 // Get dataset statistics

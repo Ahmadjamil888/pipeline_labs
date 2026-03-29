@@ -209,39 +209,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="space-y-1">
             {navigation.map((item) => (
-              item.external ? (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-full transition-all"
-                  style={{
-                    fontFamily: HF,
-                    fontWeight: 300,
-                    fontSize: "13px",
-                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
-                  }}
-                >
-                  <item.icon size={18} />
-                  <span>{item.name}</span>
-                </a>
-              ) : (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-full transition-all"
-                  style={{
-                    fontFamily: HF,
-                    fontWeight: 300,
-                    fontSize: "13px",
-                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
-                  }}
-                >
-                  <item.icon size={18} />
-                  <span>{item.name}</span>
-                </Link>
-              )
+              <Link
+                key={item.name}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-full transition-all"
+                style={{
+                  fontFamily: HF,
+                  fontWeight: 300,
+                  fontSize: "13px",
+                  color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
+                }}
+              >
+                <item.icon size={18} />
+                <span>{item.name}</span>
+              </Link>
             ))}
           </div>
         </nav>

@@ -42,7 +42,7 @@ export default function SandboxDetailPage() {
     async function fetchSandbox() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        router.push('/login')
+        router.push('/')
         return
       }
 

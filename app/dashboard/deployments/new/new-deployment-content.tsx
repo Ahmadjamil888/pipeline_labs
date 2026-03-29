@@ -34,7 +34,7 @@ export default function NewDeploymentContent() {
     async function fetchProjects() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push('/')
         return
       }
 
@@ -59,7 +59,7 @@ export default function NewDeploymentContent() {
 
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      router.push('/login')
+      router.push('/')
       return
     }
 

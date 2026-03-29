@@ -83,7 +83,7 @@ export default function ConnectRepoPage() {
       // Get user first
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push('/')
         return
       }
       
@@ -103,7 +103,7 @@ export default function ConnectRepoPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push('/')
         return
       }
 

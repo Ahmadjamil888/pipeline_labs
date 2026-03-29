@@ -53,7 +53,7 @@ export default function BillingContent() {
     async function fetchBilling() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push('/')
         return
       }
 
@@ -126,7 +126,7 @@ export default function BillingContent() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push('/')
         return
       }
       const res = await fetch(`${API_URL}/api/v1/billing/checkout`, {

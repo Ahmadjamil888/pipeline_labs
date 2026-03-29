@@ -34,7 +34,7 @@ export default function RepoDetailPage() {
     async function fetchProject() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        router.push('/')
         return
       }
 

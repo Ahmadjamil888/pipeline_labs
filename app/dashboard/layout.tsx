@@ -1,12 +1,14 @@
 "use client"
 
-import { ReactNode } from "react"
-import { createClient } from "@/app/supabase-client"
+import { ReactNode, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useTheme } from "@/app/theme-provider"
+import { useUser, useClerk } from "@clerk/nextjs"
+import { useClerkSupabaseClient } from "@/lib/clerk-supabase-client"
+import { SidebarProvider } from "./sidebar-context"
 import { 
   LayoutDashboard, 
   FolderGit, 
@@ -19,16 +21,17 @@ import {
   Plus,
   ArrowRight,
   PanelLeft,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from "lucide-react"
 
 const HF = "'Helvetica World', Helvetica, Arial, sans-serif"
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Projects", href: "/dashboard/repos", icon: FolderGit },
+  { name: "Chats", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Datasets", href: "/dashboard/datasets", icon: FolderGit },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
-  { name: "API Docs", href: "https://pipeline.stldocs.app/", icon: FileCode, external: true },
+  { name: "API Keys", href: "/dashboard/api-keys", icon: FileCode },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
@@ -36,46 +39,126 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [needsSetup, setNeedsSetup] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
+  const { user: clerkUser, isLoaded } = useUser()
+  const { signOut } = useClerk()
+  const supabase = useClerkSupabaseClient()
   const { theme, toggleTheme } = useTheme()
   
   const isDark = theme === "dark"
 
   useEffect(() => {
     async function fetchUserAndCheckOrg() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
+      // Wait for Clerk to load
+      if (!isLoaded) return
+      
+      // Check if user is signed in with Clerk
+      if (!clerkUser) {
+        router.push('/')
         return
       }
-      setUser(user)
+      
+      setUser({ id: clerkUser.id, email: clerkUser.primaryEmailAddress?.emailAddress })
 
-      // Check if user has an organization
-      const { data: orgs } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('user_id', user.id)
-        .limit(1)
+      try {
+        console.log('Dashboard: Checking profile for Clerk user:', clerkUser.id)
+        
+        // First, get or create profile for this Clerk user
+        let { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, organization_id')
+          .eq('clerk_user_id', clerkUser.id)
+          .single()
+        
+        // If table doesn't exist or other error, treat as no profile
+        if (profileError) {
+          if (profileError.code === 'PGRST116') {
+            // No rows returned - profile doesn't exist
+            console.log('Dashboard: No profile found')
+          } else if (profileError.message?.includes('400') || profileError.message?.includes('relation') || profileError.code === '42P01') {
+            // Table doesn't exist or schema issue - silently skip
+            console.log('Dashboard: Schema not set up yet, skipping org check')
+            setLoading(false)
+            return
+          } else {
+            // Log other errors but don't block dashboard
+            console.log('Dashboard: Profile query issue (non-blocking):', profileError.code || profileError.message)
+          }
+        }
 
-      if (!orgs || orgs.length === 0) {
-        // Redirect to onboarding if no organization
-        router.push('/onboarding')
+        console.log('Dashboard: Profile result:', profile)
+
+        // Check if user has an organization through their profile
+        if (profile?.organization_id) {
+          console.log('Dashboard: User has organization_id:', profile.organization_id)
+          
+          const { data: org, error: orgError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', profile.organization_id)
+            .single()
+          
+          if (orgError && orgError.code !== 'PGRST116') {
+            console.error('Dashboard: Error fetching org by ID:', orgError)
+          }
+          
+          if (org) {
+            console.log('Dashboard: Org found by ID:', org)
+            setLoading(false)
+            return
+          }
+        }
+
+        // Fallback: check if user owns any organization directly
+        if (profile?.id) {
+          console.log('Dashboard: Checking owned orgs for profile:', profile.id)
+          
+          const { data: ownedOrgs, error: ownedError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('owner_id', profile.id)
+            .limit(1)
+          
+          if (ownedError) {
+            console.error('Dashboard: Error fetching owned org:', ownedError)
+          }
+          
+          if (ownedOrgs && ownedOrgs.length > 0) {
+            console.log('Dashboard: Found owned org:', ownedOrgs[0])
+            // Update profile with this org
+            await supabase
+              .from('profiles')
+              .update({ organization_id: ownedOrgs[0].id })
+              .eq('id', profile.id)
+            
+            setLoading(false)
+            return
+          }
+        }
+
+        // No org found - show setup banner instead of immediate redirect
+        console.log('Dashboard: No org found, showing setup banner')
+        setNeedsSetup(true)
+        setLoading(false)
         return
-      }
 
-      setLoading(false)
+      } catch (err: any) {
+        console.error('Dashboard: Exception in fetchUserAndCheckOrg:', err?.message || err)
+        // On error, show dashboard anyway
+        setLoading(false)
+      }
     }
     fetchUserAndCheckOrg()
-  }, [supabase, router])
+  }, [clerkUser, isLoaded, supabase, router])
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen)
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
+    await signOut()
+    router.push('/')
   }
 
   if (loading) {
@@ -227,9 +310,43 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        {children}
-      </main>
+      <SidebarProvider sidebarOpen={sidebarOpen}>
+        <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+          {/* Setup Banner - Updated for AI Data Preprocessing */}
+          {needsSetup && (
+            <div 
+              className="m-6 p-4 rounded-2xl border flex items-center gap-4"
+              style={{ 
+                borderColor: isDark ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.3)",
+                background: isDark ? "rgba(59,130,246,0.1)" : "rgba(59,130,246,0.05)"
+              }}
+            >
+              <AlertCircle size={24} style={{ color: '#3b82f6' }} />
+              <div className="flex-1">
+                <p className="text-sm font-medium" style={{ color: isDark ? '#fff' : '#0a0a0a', fontFamily: HF }}>
+                  Welcome to Pipeline Labs!
+                </p>
+                <p className="text-xs" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', fontFamily: HF }}>
+                  Upload a dataset and start chatting with AI to preprocess your data.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 rounded-full text-xs"
+                style={{ 
+                  background: isDark ? '#fff' : '#3b82f6', 
+                  color: isDark ? '#000' : '#fff',
+                  fontFamily: HF,
+                  fontWeight: 300
+                }}
+              >
+                Start Chatting
+              </button>
+            </div>
+          )}
+          {children}
+        </main>
+      </SidebarProvider>
     </div>
   )
 }

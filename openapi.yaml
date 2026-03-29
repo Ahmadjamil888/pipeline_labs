@@ -1,0 +1,883 @@
+openapi: 3.1.0
+info:
+  title: Pipeline Labs - ML Data Preprocessing API
+  description: |
+    AI-powered ML data preprocessing platform. Upload datasets, describe transformations in natural language,
+    and get clean, analysis-ready data automatically.
+  version: 1.0.0
+  contact:
+    name: Pipeline Labs Support
+    email: support@pipelinelabs.ai
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.pipelinelabs.ai
+    description: Production API
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+tags:
+  - name: Upload
+    description: File upload operations for datasets
+  - name: Chat
+    description: AI chat for data preprocessing guidance
+  - name: Datasets
+    description: Dataset management and retrieval
+  - name: Processing
+    description: AI-powered data preprocessing operations
+  - name: Billing
+    description: Subscription and billing management via Polar
+  - name: Health
+    description: API health and status checks
+
+paths:
+  /api/upload:
+    post:
+      summary: Upload a dataset file
+      description: Upload CSV or Excel files to Supabase storage for processing
+      tags:
+        - Upload
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Dataset file (CSV, XLSX, XLS)
+                name:
+                  type: string
+                  description: Optional custom name for the dataset
+              required:
+                - file
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Invalid file format or missing file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error during upload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/chat:
+    post:
+      summary: Chat with AI for data preprocessing
+      description: Send a message to the AI assistant for dataset preprocessing guidance
+      tags:
+        - Chat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: User's message to the AI
+                datasetId:
+                  type: string
+                  format: uuid
+                  description: Optional dataset ID to reference
+                history:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+                  description: Chat history for context
+                provider:
+                  type: string
+                  enum: [groq, openrouter, deepseek, gemini]
+                  default: groq
+                  description: AI provider to use
+                model:
+                  type: string
+                  description: Model ID for the selected provider
+              required:
+                - message
+      responses:
+        '200':
+          description: AI response received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: string
+                    description: AI response text
+                  datasetId:
+                    type: string
+                    format: uuid
+                  provider:
+                    type: string
+                  model:
+                    type: string
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/datasets:
+    get:
+      summary: List all datasets
+      description: Retrieve a paginated list of user's uploaded datasets
+      tags:
+        - Datasets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+          description: Number of items per page
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+          description: Filter by processing status
+      responses:
+        '200':
+          description: List of datasets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/datasets/{id}:
+    get:
+      summary: Get dataset details
+      description: Retrieve detailed information about a specific dataset
+      tags:
+        - Datasets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Dataset ID
+      responses:
+        '200':
+          description: Dataset details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete a dataset
+      description: Remove a dataset and its associated processed files
+      tags:
+        - Datasets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Dataset ID
+      responses:
+        '200':
+          description: Dataset deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/datasets/{id}/download:
+    get:
+      summary: Download processed dataset
+      description: Download the processed dataset as a CSV file
+      tags:
+        - Datasets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Dataset ID
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json, xlsx]
+            default: csv
+          description: Download format
+      responses:
+        '200':
+          description: Dataset file
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/datasets/{id}/preview:
+    get:
+      summary: Preview dataset
+      description: Get a preview of the dataset (first N rows)
+      tags:
+        - Datasets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Dataset ID
+        - name: rows
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+          description: Number of rows to preview
+      responses:
+        '200':
+          description: Dataset preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetPreview'
+
+  /api/process:
+    post:
+      summary: Process dataset with AI
+      description: |
+        Send a dataset and natural language instructions to the AI for preprocessing.
+        The AI will analyze your instructions and apply appropriate transformations.
+      tags:
+        - Processing
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessRequest'
+      responses:
+        '200':
+          description: Processing completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessResponse'
+        '202':
+          description: Processing started asynchronously
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingJob'
+        '400':
+          description: Invalid request or unsupported operations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '402':
+          description: Payment required - quota exceeded or plan limitation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/process/{jobId}/status:
+    get:
+      summary: Get processing job status
+      description: Check the status of an asynchronous processing job
+      tags:
+        - Processing
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Processing job ID
+      responses:
+        '200':
+          description: Job status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessingJob'
+
+  /api/billing/subscription:
+    get:
+      summary: Get current subscription
+      description: Retrieve current user's subscription details from Polar
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/billing/checkout:
+    post:
+      summary: Create checkout session
+      description: Create a Polar checkout session for subscription upgrade
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priceId:
+                  type: string
+                  description: Polar price ID for the plan
+                successUrl:
+                  type: string
+                  format: uri
+                  description: URL to redirect after successful payment
+                cancelUrl:
+                  type: string
+                  format: uri
+                  description: URL to redirect if payment is cancelled
+              required:
+                - priceId
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkoutUrl:
+                    type: string
+                    format: uri
+                  sessionId:
+                    type: string
+
+  /api/billing/portal:
+    post:
+      summary: Open customer portal
+      description: Get Polar customer portal URL for managing subscriptions
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Customer portal URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  portalUrl:
+                    type: string
+                    format: uri
+
+  /api/billing/usage:
+    get:
+      summary: Get usage statistics
+      description: Get current month's usage and limits
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageStats'
+
+  /api/health:
+    get:
+      summary: Health check
+      description: Check API and service health status
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      supabase:
+                        type: string
+                        enum: [connected, disconnected]
+                      redis:
+                        type: string
+                        enum: [connected, disconnected]
+                      openrouter:
+                        type: string
+                        enum: [available, unavailable]
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for service-to-service communication
+
+  schemas:
+    UploadResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique dataset ID
+        path:
+          type: string
+          description: Storage path in Supabase
+        name:
+          type: string
+          description: Original filename
+        size:
+          type: integer
+          description: File size in bytes
+        type:
+          type: string
+          enum: [csv, xlsx, xls, json]
+        url:
+          type: string
+          format: uri
+          description: Public URL for the file
+        createdAt:
+          type: string
+          format: date-time
+
+    Dataset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        name:
+          type: string
+        originalName:
+          type: string
+        size:
+          type: integer
+        type:
+          type: string
+          enum: [csv, xlsx, xls, json]
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        storagePath:
+          type: string
+        processedPath:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+          nullable: true
+        columnCount:
+          type: integer
+          nullable: true
+        processingInstructions:
+          type: string
+          nullable: true
+        processingResults:
+          type: object
+          nullable: true
+          properties:
+            operationsApplied:
+              type: array
+              items:
+                type: string
+            columnsProcessed:
+              type: integer
+            rowsProcessed:
+              type: integer
+            llmModel:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        processedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    DatasetListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dataset'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
+    DatasetPreview:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+                enum: [string, number, boolean, date, unknown]
+              sample:
+                type: array
+                items:
+                  type: string
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        totalRows:
+          type: integer
+        totalColumns:
+          type: integer
+
+    ProcessRequest:
+      type: object
+      properties:
+        datasetId:
+          type: string
+          format: uuid
+          description: ID of the dataset to process
+        prompt:
+          type: string
+          maxLength: 2000
+          description: |
+            Natural language instructions for preprocessing.
+            Examples:
+            - "Normalize all numeric features and encode categorical variables"
+            - "Remove outliers using z-score, fill missing values with median"
+            - "Prepare for logistic regression with standard scaling"
+            - "One-hot encode categories, drop null rows, split train/test 80/20"
+        options:
+          type: object
+          properties:
+            async:
+              type: boolean
+              default: false
+              description: Process asynchronously and return job ID
+            outputFormat:
+              type: string
+              enum: [csv, json, xlsx]
+              default: csv
+            preserveOriginal:
+              type: boolean
+              default: true
+              description: Keep original file after processing
+      required:
+        - datasetId
+        - prompt
+
+    ProcessResponse:
+      type: object
+      properties:
+        datasetId:
+          type: string
+          format: uuid
+        processedDatasetId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [completed, failed]
+        downloadUrl:
+          type: string
+          format: uri
+        previewUrl:
+          type: string
+          format: uri
+        summary:
+          type: object
+          properties:
+            originalRows:
+              type: integer
+            originalColumns:
+              type: integer
+            processedRows:
+              type: integer
+            processedColumns:
+              type: integer
+            operationsApplied:
+              type: array
+              items:
+                type: string
+              description: List of preprocessing operations performed
+            llmInstructions:
+              type: string
+              description: The interpreted instructions from the LLM
+        code:
+          type: string
+          description: Optional Python code generated for the transformations
+
+    ProcessingJob:
+      type: object
+      properties:
+        jobId:
+          type: string
+        datasetId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        result:
+          $ref: '#/components/schemas/ProcessResponse'
+          nullable: true
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [active, canceled, past_due, unpaid, paused]
+        plan:
+          type: string
+          enum: [free, pro, team]
+        currentPeriodStart:
+          type: string
+          format: date-time
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        cancelAtPeriodEnd:
+          type: boolean
+        features:
+          type: object
+          properties:
+            maxDatasets:
+              type: integer
+            maxRowsPerDataset:
+              type: integer
+            maxProcessingPerMonth:
+              type: integer
+            advancedFeatures:
+              type: boolean
+            priorityProcessing:
+              type: boolean
+
+    UsageStats:
+      type: object
+      properties:
+        currentMonth:
+          type: object
+          properties:
+            datasetsUploaded:
+              type: integer
+            datasetsProcessed:
+              type: integer
+            rowsProcessed:
+              type: integer
+            apiCalls:
+              type: integer
+        limits:
+          type: object
+          properties:
+            maxDatasets:
+              type: integer
+            maxRowsPerDataset:
+              type: integer
+            maxProcessingPerMonth:
+              type: integer
+        remaining:
+          type: object
+          properties:
+            datasets:
+              type: integer
+            processing:
+              type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              nullable: true
+        timestamp:
+          type: string
+          format: date-time

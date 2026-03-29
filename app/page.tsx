@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 
 /* ─────────────────────────────────────────────
    TYPES
@@ -238,142 +239,11 @@ function Logo({ theme, height = 28, fallbackId = "nav-logo-fb" }: { theme: Theme
     />
   );
 }
-
-/* ─────────────────────────────────────────────
-   NAV
-───────────────────────────────────────────── */
-function Nav({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", h);
-    return () => window.removeEventListener("scroll", h);
-  }, []);
-
-  const navLinks = [
-    { label: "Product", href: "#product" },
-    { label: "How it works", href: "#how-it-works" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "Documentation", href: "https://pipeline.stldocs.app" },
-  ];
-
-  return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
-      height: 56,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 36px",
-      background: "var(--nav-bg)",
-      backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-      borderBottom: `1px solid ${scrolled ? "var(--border2)" : "var(--border)"}`,
-      transition: "border-color 0.2s",
-      fontFamily: T.font,
-    }}>
-      {/* Logo */}
-      <a href="#" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-        <Logo theme={theme} height={28} fallbackId="nav-logo-fb" />
-        <span id="nav-logo-fb" style={{
-          display: "none", alignItems: "center", gap: 7,
-          fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px",
-          color: "var(--text)", fontFamily: T.font,
-        }}>
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect x="1" y="1" width="9" height="9" rx="2" fill="var(--text)" />
-            <rect x="12" y="1" width="9" height="9" rx="2" fill="var(--text)" opacity="0.5" />
-            <rect x="1" y="12" width="9" height="9" rx="2" fill="var(--text)" opacity="0.3" />
-            <rect x="12" y="12" width="9" height="9" rx="2" fill="var(--text)" opacity="0.7" />
-          </svg>
-          Pipeline Labs
-        </span>
-      </a>
-
-      {/* Center links */}
-      <ul style={{
-        position: "absolute", left: "50%", transform: "translateX(-50%)",
-        display: "flex", gap: 30, listStyle: "none", fontFamily: T.font,
-      }}>
-        {navLinks.map((l) => (
-          <li key={l.label}>
-            <a
-              href={l.href}
-              target={l.href.startsWith("http") ? "_blank" : undefined}
-              rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
-              style={{
-                fontSize: 13.5, fontWeight: 400, color: "var(--text2)",
-                textDecoration: "none", letterSpacing: "-0.01em",
-                transition: "color 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text2)")}
-            >{l.label}</a>
-          </li>
-        ))}
-      </ul>
-
-      {/* Right */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {/* Theme toggle */}
-        <button
-          onClick={onToggle}
-          aria-label="Toggle theme"
-          style={{
-            width: 34, height: 34, borderRadius: "50%",
-            background: "transparent", border: "1px solid var(--border2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: "var(--text2)", transition: "background 0.2s",
-          }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "var(--bg3)")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "transparent")}
-        >
-          {theme === "dark" ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" />
-              <line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-          )}
-        </button>
-
-        <a href="/login" style={{
-          fontSize: 13, color: "var(--text2)", background: "none",
-          border: "none", padding: "6px 12px", cursor: "pointer",
-          fontFamily: T.font, fontWeight: 400, textDecoration: "none",
-        }}>Sign in</a>
-
-        <a href="/contact" style={{
-          fontSize: 13, fontWeight: 500, color: "var(--text)",
-          background: "transparent", border: "1px solid var(--border2)",
-          borderRadius: T.pill, padding: "6px 16px", cursor: "pointer",
-          fontFamily: T.font, transition: "background 0.15s", textDecoration: "none",
-        }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = "var(--bg3)")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")}
-        >Contact sales</a>
-
-        <a href="/dashboard" style={{
-          fontSize: 13, fontWeight: 500, color: "var(--bg)",
-          background: "var(--text)", border: "none",
-          borderRadius: T.pill, padding: "7px 20px", cursor: "pointer",
-          fontFamily: T.font, transition: "opacity 0.15s", textDecoration: "none",
-        }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.opacity = "0.78")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.opacity = "1")}
-        >Get started</a>
-      </div>
-    </nav>
-  );
-}
-
 /* ─────────────────────────────────────────────
    HERO
 ───────────────────────────────────────────── */
 function Hero() {
+  const { isSignedIn } = useAuth();
   return (
     <div style={{ paddingTop: 56 }}>
       {/* Text */}
@@ -388,18 +258,31 @@ function Hero() {
           marginBottom: 32,
           fontFamily: T.font,
         }}>
-          Built to automate your entire DevOps,<br />
-          Pipeline Labs is the best way to ship with AI.
+          AI-powered data preprocessing.<br />
+          Pipeline Labs turns raw data into ML-ready datasets.
         </h1>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 60 }}>
-          <a href="/dashboard" style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "var(--text)", color: "var(--bg)",
-            fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em",
-            borderRadius: T.pill, padding: "11px 24px",
-            border: "none", cursor: "pointer", textDecoration: "none",
-            fontFamily: T.font, transition: "opacity 0.15s",
-          }}>Start free trial ↓</a>
+          {isSignedIn ? (
+            <a href="/dashboard" style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "var(--text)", color: "var(--bg)",
+              fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em",
+              borderRadius: T.pill, padding: "11px 24px",
+              border: "none", cursor: "pointer", textDecoration: "none",
+              fontFamily: T.font, transition: "opacity 0.15s",
+            }}>Start free trial ↓</a>
+          ) : (
+            <SignInButton mode="modal" fallbackRedirectUrl="/dashboard">
+              <button style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: "var(--text)", color: "var(--bg)",
+                fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em",
+                borderRadius: T.pill, padding: "11px 24px",
+                border: "none", cursor: "pointer", textDecoration: "none",
+                fontFamily: T.font, transition: "opacity 0.15s",
+              }}>Start free trial ↓</button>
+            </SignInButton>
+          )}
           <a href="#how-it-works" style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "transparent", color: "var(--text)",
@@ -521,8 +404,8 @@ function Hero() {
    MARQUEE
 ───────────────────────────────────────────── */
 const MARQUEE_ITEMS = [
-  "AWS","Kubernetes","GitHub Actions","Terraform","Google Cloud",
-  "Datadog","Azure","Docker","Prometheus","Vercel","Fly.io","ArgoCD",
+  "Pandas","NumPy","Scikit-learn","TensorFlow","PyTorch",
+  "XGBoost","LightGBM","Pandas","SQL","Spark","Polars","Dask",
 ];
 
 function Marquee() {
@@ -593,13 +476,12 @@ function VideoSection() {
             muted
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             src="/hero-bg-video.mp4"
             onError={(e) => {
-              console.error("Video failed to load:", e);
-              // Optionally show a fallback background
-              (e.target as HTMLVideoElement).style.background = "var(--bg3)";
+              // Silently hide video on error - gradient fallback shows instead
+              (e.target as HTMLVideoElement).style.display = "none";
             }}
           />
           <div style={{
@@ -618,16 +500,16 @@ function VideoSection() {
 ───────────────────────────────────────────── */
 const STEPS = [
   {
-    n: "01", title: "Connect your repos",
-    body: "Link GitHub, GitLab, or Bitbucket in seconds. Pipeline Labs learns your deployment topology automatically.",
+    n: "01", title: "Upload your dataset",
+    body: "Drag and drop any CSV or Excel file. We automatically detect column types and data quality issues.",
   },
   {
-    n: "02", title: "AI maps your infra",
-    body: "Our agent models your cloud resources, pipelines, and SLOs — building a live graph of everything.",
+    n: "02", title: "Describe what you need",
+    body: "Type natural language instructions like \"Normalize features and encode categories\" — our AI understands your intent.",
   },
   {
-    n: "03", title: "Ship & self-heal",
-    body: "Every deploy is canary-gated and rolled out by AI. Anomalies trigger instant remediation.",
+    n: "03", title: "Get clean data instantly",
+    body: "Download your preprocessed dataset in seconds, ready for machine learning models. No coding required.",
   },
 ];
 
@@ -665,32 +547,32 @@ function HowItWorks() {
    SDK CODE EDITOR SECTION
 ───────────────────────────────────────────── */
 
-const DEFAULT_CODE = `from pipeline_labs import Pipeline
+const DEFAULT_CODE = `from pipeline_labs import DataProcessor
 
 # Initialize with your API key
-client = Pipeline(PIPELINE_API_KEY="your_api_key")
+client = DataProcessor(PIPELINE_API_KEY="your_api_key")
 
-# List your deployments
-deployments = client.deployments.list()
-for deployment in deployments.deployments:
-    print(f"{deployment.id}: {deployment.status}")
+# Upload a dataset
+dataset = client.datasets.upload("customer_data.csv")
 
-# Trigger a new deployment
-deploy = client.deployments.create(
-    service="auth-service",
-    environment="production",
-    strategy="canary",
-    canary_percentage=15,
-    rollback_on={
-        "p99_latency_ms": 200,
-        "error_rate_percent": 1.5,
-    }
+# Process with natural language
+processed = client.process(
+    dataset_id=dataset.id,
+    instructions="""Normalize numeric features, 
+        encode categorical variables,
+        remove outliers using z-score"""
 )
-print(f"Deploy started: {deploy.id}")
 
-# Monitor deployment health
-health = client.deployments.health(deploy.id)
-print(f"Status: {health.status} | P99: {health.p99_ms}ms")
+# Download the clean dataset
+client.datasets.download(
+    processed.id, 
+    format="csv",
+    output_path="clean_data.csv"
+)
+
+# Or get a preview of the results
+preview = client.datasets.preview(processed.id, rows=10)
+print(f"Processed {preview.row_count} rows, {preview.column_count} columns")
 `;
 
 type Token = { type: string; value: string };
@@ -997,20 +879,20 @@ function SDKSection() {
    FEATURES
 ───────────────────────────────────────────── */
 const FEATURES = [
-  { title: "Autonomous Deployments", body: "AI-driven canary releases, blue-green switches, and instant rollbacks. No YAML warrior needed." },
-  { title: "Predictive Monitoring",  body: "Detect anomalies before they become incidents. Correlates metrics, logs, and traces automatically." },
-  { title: "Infra as Conversation",  body: "Provision, resize, or teardown resources via natural language — fully auditable and reversible." },
-  { title: "Security & Compliance",  body: "Continuous drift detection, secret scanning, and policy enforcement baked into every run." },
-  { title: "Cloud Cost Optimizer",   body: "AI-recommended right-sizing and idle resource cleanup. Teams save 40%+ on cloud spend." },
-  { title: "Multi-cloud Orchestration", body: "AWS, GCP, Azure unified under one AI control plane. Move workloads between clouds in minutes." },
+  { title: "AI-Powered Preprocessing", body: "Describe what you need in plain English. Our AI translates your instructions into optimized data transformations." },
+  { title: "Automatic Feature Engineering",  body: "Smart encoding, normalization, and scaling. Handles categorical variables, missing values, and outliers automatically." },
+  { title: "Data Quality Detection",  body: "Identifies data quality issues, type mismatches, and inconsistencies before they break your models." },
+  { title: "Train-Test Splitting",   body: "Automatically splits your data for ML training. Configurable ratios with optional stratification." },
+  { title: "Multi-Format Support",   body: "Import from CSV, Excel, JSON, or Parquet. Export clean data in any format your models need." },
+  { title: "No-Code Data Pipelines", body: "Build complex preprocessing pipelines without writing a single line of code. Perfect for teams of all skill levels." },
 ];
 
 function Features() {
   return (
     <section id="product" style={{ padding: "96px 44px", maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 48, gap: 32, flexWrap: "wrap" }}>
-        <div><Eyebrow>Features</Eyebrow><SectionTitle>Everything DevOps,<br />nothing manual</SectionTitle></div>
-        <SubText>Full operational lifecycle — from CI/CD to cost optimization — end to end.</SubText>
+        <div><Eyebrow>Features</Eyebrow><SectionTitle>ML data preprocessing,<br />powered by AI</SectionTitle></div>
+        <SubText>Full data preparation pipeline — from raw data to ML-ready datasets in minutes.</SubText>
       </div>
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(2, 1fr)",
@@ -1043,10 +925,10 @@ function Features() {
    STATS
 ───────────────────────────────────────────── */
 const STATS = [
-  { n: "98", s: "%", label: "Deployment success rate" },
-  { n: "40", s: "%", label: "Average cloud cost savings" },
-  { n: "4",  s: "×", label: "Faster release cadence" },
-  { n: "<2", s: "m", label: "Mean time to remediate" },
+  { n: "95", s: "%", label: "Data quality improvement" },
+  { n: "10", s: "×", label: "Faster preprocessing" },
+  { n: "50", s: "K+", label: "Datasets processed" },
+  { n: "<5", s: "min", label: "Average processing time" },
 ];
 
 function Stats() {
@@ -1083,9 +965,9 @@ function Stats() {
    TESTIMONIALS
 ───────────────────────────────────────────── */
 const TESTIMONIALS = [
-  { stars: 5, text: "\"Pipeline Labs cut our deploy time from 40 minutes to under 3. The AI rollback saved us twice in the first week alone.\"", initials: "AS", name: "Aryan Shah", role: "CTO · Nexus Finance", grad: "135deg,#555,#222" },
-  { stars: 5, text: "\"I was skeptical about AI managing our infra, but after six months I can't imagine going back. It genuinely understands our system.\"", initials: "LK", name: "Laura Kim", role: "Platform Lead · Orbit AI", grad: "135deg,#444,#111" },
-  { stars: 5, text: "\"We saved $24k/month on AWS bills in the first quarter. The cost optimizer alone pays for the Team plan ten times over.\"", initials: "MR", name: "Marcus Reid", role: "DevOps Eng · Stackway", grad: "135deg,#666,#333" },
+  { stars: 5, text: "\"Pipeline Labs cut our data prep time from 2 days to 30 minutes. The AI understood exactly what we needed for our regression model.\"", initials: "AS", name: "Aryan Shah", role: "Data Scientist · Nexus Finance", grad: "135deg,#555,#222" },
+  { stars: 5, text: "\"I used to spend hours writing pandas code. Now I just describe what I need and get perfect, clean data every time.\"", initials: "LK", name: "Laura Kim", role: "ML Engineer · Orbit AI", grad: "135deg,#444,#111" },
+  { stars: 5, text: "\"Our team processed 10,000+ datasets last quarter with zero manual coding. The ROI on the Team plan is incredible.\"", initials: "MR", name: "Marcus Reid", role: "Head of Analytics · Stackway", grad: "135deg,#666,#333" },
 ];
 
 function Testimonials() {
@@ -1131,18 +1013,18 @@ function Testimonials() {
 ───────────────────────────────────────────── */
 const PLANS = [
   {
-    name: "Free", monthly: 0, annual: 0, desc: "Perfect for solo devs and side projects. No credit card required.",
-    features: ["Up to 3 repos","50 AI deployments / mo","Basic monitoring","Community support","1 cloud provider"],
+    name: "Free", monthly: 0, annual: 0, desc: "Perfect for getting started with AI data preprocessing. No credit card required.",
+    features: ["Up to 5 datasets","1,000 rows per dataset","50 processing jobs/month","Basic transformations (normalize, encode)","CSV & Excel support","Email support"],
     cta: "Get started free", featured: false,
   },
   {
-    name: "Pro", monthly: 29, annual: 22, desc: "For growing teams that need full automation and advanced observability.",
-    features: ["Unlimited repos","Unlimited AI deployments","Predictive monitoring + alerts","Cost optimizer","3 cloud providers","Priority email support"],
+    name: "Pro", monthly: 29, annual: 22, desc: "For professionals who need more power and flexibility.",
+    features: ["Unlimited datasets","50,000 rows per dataset","Unlimited processing","Advanced AI transformations","All file formats (CSV, Excel, JSON, Parquet)","Train/test splitting","Export Python code","Priority email support"],
     cta: "Start 14-day free trial", featured: true,
   },
   {
-    name: "Team", monthly: 109, annual: 82, desc: "For engineering orgs that need SOC 2, SSO, and dedicated support.",
-    features: ["Everything in Pro","Up to 20 seats","SSO / SAML","SOC 2 Type II","All cloud providers","Dedicated Slack support"],
+    name: "Team", monthly: 109, annual: 82, desc: "For data science teams building ML pipelines together.",
+    features: ["Everything in Pro","Up to 20 team members","250,000 rows per dataset","Custom preprocessing templates","SSO / SAML","Audit logs & data lineage","Dedicated Slack support","On-premise deployment option"],
     cta: "Start 14-day free trial", featured: false,
   },
 ];
@@ -1246,11 +1128,11 @@ function Pricing() {
    FAQ
 ───────────────────────────────────────────── */
 const FAQS = [
-  { q: "Does Pipeline Labs have access to my source code?", a: "Pipeline Labs reads repository metadata, CI configs, and deployment manifests — never your business logic. All data is encrypted in transit and at rest." },
-  { q: "Which cloud providers are supported?", a: "AWS, Google Cloud, and Azure are fully supported on all paid plans. Cloudflare, Vercel, Railway, and Fly.io integrations are currently in beta." },
-  { q: "What if the AI makes a bad deployment?", a: "Every deployment is canary-gated. If error rates or latency breach your thresholds, Pipeline Labs halts and rolls back automatically before 100% traffic is promoted." },
-  { q: "Can I self-host Pipeline Labs?", a: "A BYOC (Bring Your Own Cloud) option is available on the Enterprise plan. Contact us at enterprise@pipelinelabs.ai for a custom quote." },
-  { q: "How does billing work for the Team plan?", a: "The Team plan is $109/month (or $82/month billed annually) for up to 20 seats. You're only charged after your free trial ends." },
+  { q: "Does Pipeline Labs have access to my data?", a: "Your data is processed securely and never used to train our models. All processing happens in isolated environments, and your data is encrypted in transit and at rest. You can request complete deletion at any time." },
+  { q: "What file formats are supported?", a: "We support CSV, Excel (XLSX/XLS), JSON, and Parquet files. You can also export your processed data in any of these formats. We're constantly adding support for more data formats based on customer feedback." },
+  { q: "How does the AI understand my preprocessing instructions?", a: "Our AI has been trained on thousands of data science workflows. Simply describe what you need in plain English (e.g., \"normalize numeric features, encode categories, remove outliers\") and the AI translates this into optimized data transformations." },
+  { q: "Can I see the code generated by the AI?", a: "Yes! Pro and Team plans include code export. You can download the Python/pandas code for any preprocessing pipeline, which is perfect for learning, auditing, or integrating into existing workflows." },
+  { q: "How does billing work for the Team plan?", a: "The Team plan is $109/month (or $82/month billed annually) for up to 20 team members. You're only charged after your free trial ends. Additional seats beyond 20 can be added for $5/user/month." },
 ];
 
 function FAQ() {
@@ -1301,10 +1183,10 @@ function CTABanner() {
     }}>
       <Divider style={{ marginBottom: 52 }} />
       <h2 style={{ fontSize: "clamp(28px, 3.8vw, 44px)", fontWeight: 300, letterSpacing: "-0.04em", color: "var(--text)", marginBottom: 14, fontFamily: T.font }}>
-        Your next deploy ships itself.
+        Your data, prepped by AI.
       </h2>
       <p style={{ fontSize: 16, color: "var(--text2)", marginBottom: 36, maxWidth: 480, margin: "0 auto 36px", fontFamily: T.font }}>
-        Join thousands of engineers who've handed their pipelines to AI — and never looked back.
+        Join thousands of data scientists who've automated their preprocessing — and spend more time on model building.
       </p>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
         <a href="/dashboard" style={{
@@ -1336,10 +1218,10 @@ const FOOTER_LINKS: Record<string, { label: string; href: string }[]> = {
     { label: "Status", href: "#" },
   ],
   Developers: [
-    { label: "Documentation", href: "https://pipeline.stldocs.app" },
-    { label: "API Reference", href: "https://pipeline.stldocs.app" },
-    { label: "CLI", href: "#" },
-    { label: "Integrations", href: "#" },
+    { label: "Documentation", href: "#" },
+    { label: "API Reference", href: "#" },
+    { label: "SDK", href: "#" },
+    { label: "Examples", href: "#" },
     { label: "Open source", href: "#" },
   ],
   Company:    [
@@ -1367,7 +1249,7 @@ function Footer({ theme }: { theme: Theme }) {
             <Logo theme={theme} height={26} fallbackId="ft-logo-fb" />
             <span id="ft-logo-fb" style={{ display: "none", fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px", color: "var(--text)", marginBottom: 14 }}>Pipeline Labs</span>
             <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65, maxWidth: 240, marginBottom: 22, marginTop: 14 }}>
-              AI-native DevOps that deploys, monitors, scales, and heals your infrastructure — autonomously.
+              AI-powered data preprocessing that cleans, transforms, and prepares your data for machine learning — automatically.
             </p>
             <div style={{ display: "flex", gap: 8 }}>
               {[
@@ -1446,7 +1328,6 @@ export default function PipelineLabs() {
     <>
       <GlobalStyle />
       <div style={{ background: "var(--bg)", minHeight: "100vh", fontFamily: T.font }}>
-        <Nav theme={theme} onToggle={toggle} />
         <main>
           <Hero />
           <Marquee />

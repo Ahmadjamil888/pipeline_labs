@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClient } from "@/app/supabase-client"
 import { useRouter } from "next/navigation"
+import { useUser } from "@clerk/nextjs"
+import { useClerkSupabaseClient } from "@/lib/clerk-supabase-client"
 import { Building2, ArrowRight, RefreshCw } from "lucide-react"
 import { useTheme } from "@/app/theme-provider"
 
@@ -14,35 +15,94 @@ export default function OnboardingPage() {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useClerkSupabaseClient()
+  const { user: clerkUser, isLoaded } = useUser()
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
   useEffect(() => {
     async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
+      // Wait for Clerk to load
+      if (!isLoaded) return
+      
+      // Check if user is signed in
+      if (!clerkUser) {
+        router.push('/')
         return
       }
 
-      // Check if user already has an organization
-      const { data: orgs } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('user_id', user.id)
-        .limit(1)
+      try {
+        // First, get or create profile for this Clerk user
+        let { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, organization_id')
+          .eq('clerk_user_id', clerkUser.id)
+          .single()
+        
+        // If no profile exists, create one
+        if (!profile && !profileError) {
+          console.log('Creating new profile for Clerk user in onboarding')
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              clerk_user_id: clerkUser.id,
+              email: clerkUser.primaryEmailAddress?.emailAddress || '',
+              full_name: clerkUser.fullName || '',
+            })
+            .select('id, organization_id')
+            .single()
+          
+          if (createError) {
+            console.error('Error creating profile:', createError)
+          } else {
+            profile = newProfile
+          }
+        }
 
-      if (orgs && orgs.length > 0) {
-        // User already has an org, redirect to dashboard
-        router.push('/dashboard')
-        return
+        // If profile has organization_id, user already has an org
+        if (profile?.organization_id) {
+          const { data: org } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', profile.organization_id)
+            .single()
+          
+          if (org) {
+            // User already has an org, redirect to dashboard
+            router.push('/dashboard')
+            return
+          }
+        }
+
+        // Also check if user owns any org directly
+        if (profile?.id) {
+          const { data: ownedOrg } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('owner_id', profile.id)
+            .limit(1)
+            .single()
+          
+          if (ownedOrg) {
+            // Update profile with org and redirect
+            await supabase
+              .from('profiles')
+              .update({ organization_id: ownedOrg.id })
+              .eq('id', profile.id)
+            
+            router.push('/dashboard')
+            return
+          }
+        }
+
+        setLoading(false)
+      } catch (err: any) {
+        console.error('Error in checkUser:', err?.message || err)
+        setLoading(false)
       }
-
-      setLoading(false)
     }
     checkUser()
-  }, [supabase, router])
+  }, [clerkUser, isLoaded, supabase, router])
 
   const createOrganization = async () => {
     if (!orgName.trim()) {
@@ -53,28 +113,75 @@ export default function OnboardingPage() {
     setCreating(true)
     setError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push('/login')
+    if (!clerkUser) {
+      router.push('/')
       return
     }
 
-    const { error: insertError } = await supabase
-      .from('organizations')
-      .insert({
-        user_id: user.id,
-        name: orgName.trim(),
-        created_at: new Date().toISOString()
-      })
+    try {
+      // Get or create profile
+      let { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('clerk_user_id', clerkUser.id)
+        .single()
+      
+      if (!profile) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            clerk_user_id: clerkUser.id,
+            email: clerkUser.primaryEmailAddress?.emailAddress || '',
+            full_name: clerkUser.fullName || '',
+          })
+          .select('id')
+          .single()
+        
+        if (createError) {
+          setError('Failed to create user profile: ' + createError.message)
+          setCreating(false)
+          return
+        }
+        profile = newProfile
+      }
 
-    if (insertError) {
-      setError(insertError.message)
+      // Create organization
+      const slug = orgName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          name: orgName.trim(),
+          slug: slug + '-' + Date.now().toString(36),
+          owner_id: profile.id,
+          plan: 'free',
+          limits: { maxProjects: 3, maxServices: 10, maxDeployments: 50 }
+        })
+        .select()
+        .single()
+
+      if (orgError) {
+        setError(orgError.message)
+        setCreating(false)
+        return
+      }
+
+      // Update profile with organization_id and role
+      await supabase
+        .from('profiles')
+        .update({ 
+          organization_id: org.id,
+          role: 'owner'
+        })
+        .eq('id', profile.id)
+
+      // Redirect to dashboard after creating org
+      router.push('/dashboard')
+    } catch (err: any) {
+      console.error('Error creating organization:', err)
+      setError(err?.message || 'Failed to create organization')
       setCreating(false)
-      return
     }
-
-    // Redirect to dashboard after creating org
-    router.push('/dashboard')
   }
 
   if (loading) {

@@ -4,8 +4,8 @@ import { AgentContext, AgentResult } from './types'
 export class DataAnalyzerAgent extends BaseAgent {
   name = 'DataAnalyzer'
   description = 'Analyzes datasets and provides detailed profiling'
-  model = 'llama-3.3-70b-versatile'
-  provider = 'groq' as const
+  model = 'meta-llama/llama-3.1-8b-instruct:free'
+  provider = 'openrouter' as const
   
   systemPrompt = `You are the Data Analyzer agent. Your job is to analyze datasets and provide structured insights.
 

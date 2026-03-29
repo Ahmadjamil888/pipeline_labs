@@ -4,8 +4,8 @@ import { AgentContext, AgentResult } from './types'
 export class MainAgent extends BaseAgent {
   name = 'MainAgent'
   description = 'Primary conversational AI for data preprocessing guidance'
-  model = 'llama-3.1-8b-instant'
-  provider = 'groq' as const
+  model = 'meta-llama/llama-3.1-8b-instruct:free'
+  provider = 'openrouter' as const
   
   systemPrompt = `You are Pipeline AI, an expert data preprocessing assistant that AUTOMATICALLY analyzes and transforms datasets for machine learning.
 

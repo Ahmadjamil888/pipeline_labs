@@ -88,14 +88,14 @@ export default function ChatDashboard() {
   const [profile, setProfile] = useState<any>(null)
   const [apiKey, setApiKey] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('groq')
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('openrouter')
   const [showProviderSelector, setShowProviderSelector] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const providers: ProviderConfig[] = [
+    { id: 'openrouter', name: 'OpenRouter (Free)', icon: <Brain size={14} />, model: 'meta-llama/llama-3.1-8b-instruct:free' },
     { id: 'groq', name: 'Groq (Fast)', icon: <Zap size={14} />, model: 'llama-3.1-8b-instant' },
-    { id: 'openrouter', name: 'OpenRouter', icon: <Brain size={14} />, model: 'meta-llama/llama-3.1-8b-instruct:free' },
     { id: 'deepseek', name: 'DeepSeek', icon: <Brain size={14} />, model: 'deepseek-chat' },
     { id: 'gemini', name: 'Gemini', icon: <Sparkles size={14} />, model: 'gemini-1.5-flash' },
   ]
@@ -374,7 +374,7 @@ export default function ChatDashboard() {
       showDataWorkspace: !!hasDataset,
       workspaceData: hasDataset ? {
         columns: [
-          { name: 'Loading...', type: 'pending', nullCount: 0, uniqueCount: 0 }
+          { name: 'Loading...', type: 'pending', nullCount: 0, uniqueCount: 0, sample: '' }
         ],
         transformations: [
           { id: '1', name: 'Load Dataset', description: 'Reading file structure and validating format', status: 'running' },

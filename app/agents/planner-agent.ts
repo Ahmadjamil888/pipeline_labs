@@ -4,8 +4,8 @@ import { AgentContext, AgentResult } from './types'
 export class PlannerAgent extends BaseAgent {
   name = 'Planner'
   description = 'Creates step-by-step preprocessing pipelines'
-  model = 'llama-3.3-70b-versatile'
-  provider = 'groq' as const
+  model = 'meta-llama/llama-3.1-8b-instruct:free'
+  provider = 'openrouter' as const
   
   systemPrompt = `You are the Preprocessing Planner agent. Your job is to create detailed, step-by-step preprocessing pipelines.
 

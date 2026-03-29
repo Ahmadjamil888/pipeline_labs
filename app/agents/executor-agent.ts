@@ -4,8 +4,8 @@ import { AgentContext, AgentResult } from './types'
 export class ExecutorAgent extends BaseAgent {
   name = 'Executor'
   description = 'Executes data transformations and preprocessing steps'
-  model = 'llama-3.1-8b-instant'
-  provider = 'groq' as const
+  model = 'meta-llama/llama-3.1-8b-instruct:free'
+  provider = 'openrouter' as const
   
   systemPrompt = `You are the Data Transformation Executor agent. Your job is to apply preprocessing steps to datasets.
 

@@ -49,7 +49,7 @@ interface Message {
   showLiveEditor?: boolean
   showDataWorkspace?: boolean
   workspaceData?: {
-    columns: { name: string; type: string; nullCount: number; uniqueCount: number }[]
+    columns: { name: string; type: string; nullCount: number; uniqueCount: number; sample: string }[]
     transformations: { id: string; name: string; description: string; status: 'pending' | 'running' | 'complete' | 'error' }[]
     previewData: (string | number)[][]
     progress: number

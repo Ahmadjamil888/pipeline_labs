@@ -22,8 +22,10 @@ export async function GET(request: NextRequest) {
   // Check Redis
   try {
     const redis = getRedisClient();
-    await redis.ping();
-    checks.redis = true;
+    if (redis) {
+      await redis.ping();
+      checks.redis = true;
+    }
   } catch {
     checks.redis = false;
   }

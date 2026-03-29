@@ -6,7 +6,6 @@ import {
   parseInstructions, 
   parseFile, 
   dataframeToCsv,
-  dataframeToJson,
   getDatasetStats 
 } from '@/lib/preprocessing';
 import { getCache, setCache, queueJob, updateJobStatus } from '@/lib/redis';
@@ -216,13 +215,30 @@ export async function POST(request: NextRequest) {
       const processingDuration = Date.now() - startTime;
 
       // Generate output
-      let outputData: string | Buffer;
-      let outputFormat = options.outputFormat || 'csv';
+      let outputData: string;
+      const outputFormat = options.outputFormat || 'csv';
+
+      // Build a DataFrame-compatible object from result
+      const resultRows = result.data;
+      const resultCols = result.columns;
+
+      // Create a simple object with toJSON for compatibility
+      const resultDf = { rows: resultRows, cols: resultCols };
 
       if (outputFormat === 'json') {
-        outputData = JSON.stringify(dataframeToJson(result.data));
+        outputData = JSON.stringify(resultRows);
       } else {
-        outputData = dataframeToCsv(result.data);
+        // Build CSV manually
+        const headers = resultCols.join(',');
+        const rows = resultRows.map((row: Record<string, unknown>) =>
+          resultCols.map(c => {
+            const v = row[c];
+            if (v === null || v === undefined) return '';
+            const s = String(v);
+            return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+          }).join(',')
+        );
+        outputData = [headers, ...rows].join('\n');
       }
 
       // Upload processed file
@@ -240,7 +256,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Update dataset record
-      const processedStats = getDatasetStats(result.data);
       const { error: updateError } = await supabaseAdmin
         .from('datasets')
         .update({
@@ -253,10 +268,10 @@ export async function POST(request: NextRequest) {
             column_changes: result.columnChanges,
             llm_instructions: llmResponse.instructions,
           },
-          row_count: processedStats.rowCount,
-          column_count: processedStats.columnCount,
+          row_count: result.processedShape[0],
+          column_count: result.processedShape[1],
           processed_at: new Date().toISOString(),
-          llm_model_used: 'anthropic/claude-3.5-sonnet',
+          llm_model_used: MODEL,
         })
         .eq('id', datasetId);
 

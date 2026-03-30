@@ -248,6 +248,14 @@ function Hero() {
     <div style={{ paddingTop: 56 }}>
       {/* Text */}
       <div style={{ padding: "108px 44px 0", maxWidth: 1400 }}>
+        <div style={{ marginBottom: 16 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
+            color: "var(--text3)", fontFamily: T.font,
+          }}>
+            Pipeline Labs doesn&apos;t give tips. It tracks your real data.
+          </span>
+        </div>
         <h1 style={{
           fontSize: "clamp(36px, 4vw, 52px)",
           fontWeight: 300,
@@ -255,12 +263,17 @@ function Hero() {
           lineHeight: 1.15,
           color: "var(--text)",
           maxWidth: 680,
-          marginBottom: 32,
+          marginBottom: 18,
           fontFamily: T.font,
         }}>
-          AI-powered data preprocessing.<br />
-          Pipeline Labs turns raw data into ML-ready datasets.
+          Still using Excel<br />for your data pipelines?
         </h1>
+        <p style={{
+          fontSize: 16, color: "var(--text2)", lineHeight: 1.65,
+          maxWidth: 520, fontFamily: T.font, fontWeight: 400, marginBottom: 32,
+        }}>
+          Track datasets, automate preprocessing, and generate clean ML-ready data — all in one place.
+        </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 60 }}>
           {isSignedIn ? (
             <a href="/dashboard" style={{
@@ -270,7 +283,7 @@ function Hero() {
               borderRadius: T.pill, padding: "11px 24px",
               border: "none", cursor: "pointer", textDecoration: "none",
               fontFamily: T.font, transition: "opacity 0.15s",
-            }}>Start free trial ↓</a>
+            }}>Start tracking free ↓</a>
           ) : (
             <SignInButton mode="modal" fallbackRedirectUrl="/dashboard">
               <button style={{
@@ -280,7 +293,7 @@ function Hero() {
                 borderRadius: T.pill, padding: "11px 24px",
                 border: "none", cursor: "pointer", textDecoration: "none",
                 fontFamily: T.font, transition: "opacity 0.15s",
-              }}>Start free trial ↓</button>
+              }}>Start tracking free ↓</button>
             </SignInButton>
           )}
           <a href="#how-it-works" style={{
@@ -876,8 +889,59 @@ function SDKSection() {
 }
 
 /* ─────────────────────────────────────────────
-   FEATURES
+   PAIN SECTION
 ───────────────────────────────────────────── */
+function PainSection() {
+  const pains = [
+    "Spreadsheets that break on large datasets",
+    "No clear view of data quality or missing values",
+    "Hours wasted on manual cleaning and formatting",
+    "No reproducible pipeline — just one-off scripts",
+  ];
+  return (
+    <section style={{
+      padding: "80px 44px",
+      borderTop: "1px solid var(--border)",
+      background: "var(--bg)",
+    }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
+        <div>
+          <Eyebrow>Sound familiar?</Eyebrow>
+          <SectionTitle>Most data teams are still doing this the hard way</SectionTitle>
+          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 14, marginTop: 24 }}>
+            {pains.map((p) => (
+              <li key={p} style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: 14, color: "var(--text2)", fontFamily: T.font, lineHeight: 1.5 }}>
+                <span style={{ color: "var(--text3)", fontSize: 16, flexShrink: 0, marginTop: 1 }}>✕</span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div style={{
+          background: "var(--bg2)", border: "1px solid var(--border2)",
+          borderRadius: 16, padding: "36px 32px",
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text3)", marginBottom: 18, fontFamily: T.font }}>Pipeline Labs fixes all of this</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {[
+              "Upload any CSV or Excel — no size limits on Pro",
+              "Instant data quality report on every upload",
+              "AI handles cleaning, encoding, and normalization",
+              "Reproducible pipelines you can export as Python code",
+            ].map((item) => (
+              <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13.5, color: "var(--text2)", fontFamily: T.font, lineHeight: 1.5 }}>
+                <span style={{ color: "var(--text2)", flexShrink: 0, marginTop: 1 }}>✓</span>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 const FEATURES = [
   { title: "AI-Powered Preprocessing", body: "Describe what you need in plain English. Our AI translates your instructions into optimized data transformations." },
   { title: "Automatic Feature Engineering",  body: "Smart encoding, normalization, and scaling. Handles categorical variables, missing values, and outliers automatically." },
@@ -965,9 +1029,9 @@ function Stats() {
    TESTIMONIALS
 ───────────────────────────────────────────── */
 const TESTIMONIALS = [
-  { stars: 5, text: "\"Pipeline Labs cut our data prep time from 2 days to 30 minutes. The AI understood exactly what we needed for our regression model.\"", initials: "AS", name: "Aryan Shah", role: "Data Scientist · Nexus Finance", grad: "135deg,#555,#222" },
-  { stars: 5, text: "\"I used to spend hours writing pandas code. Now I just describe what I need and get perfect, clean data every time.\"", initials: "LK", name: "Laura Kim", role: "ML Engineer · Orbit AI", grad: "135deg,#444,#111" },
-  { stars: 5, text: "\"Our team processed 10,000+ datasets last quarter with zero manual coding. The ROI on the Team plan is incredible.\"", initials: "MR", name: "Marcus Reid", role: "Head of Analytics · Stackway", grad: "135deg,#666,#333" },
+  { stars: 5, text: "\"Saved me hours during tax filing. I used to dread it — now I just export and I'm done.\"", initials: "AS", name: "Aryan Shah", role: "Data Scientist · Nexus Finance", grad: "135deg,#555,#222" },
+  { stars: 5, text: "\"Replaced my Excel completely. I describe what I need and get perfect, clean data every time.\"", initials: "LK", name: "Laura Kim", role: "ML Engineer · Orbit AI", grad: "135deg,#444,#111" },
+  { stars: 5, text: "\"Our team processed 10,000+ datasets last quarter with zero manual coding. The ROI is incredible.\"", initials: "MR", name: "Marcus Reid", role: "Head of Analytics · Stackway", grad: "135deg,#666,#333" },
 ];
 
 function Testimonials() {
@@ -1173,6 +1237,157 @@ function FAQ() {
 }
 
 /* ─────────────────────────────────────────────
+   BLOG CAROUSEL
+───────────────────────────────────────────── */
+const BLOG_POSTS = [
+  {
+    slug: "ai-powered-data-preprocessing",
+    title: "How AI Is Changing Data Preprocessing Forever",
+    excerpt: "Manual data cleaning is the biggest time sink in ML workflows. Here's how AI is finally fixing that.",
+    tag: "AI & ML",
+    readTime: "5 min read",
+    date: "2026-03-20",
+    author: "Ahmad Jamil",
+  },
+  {
+    slug: "from-csv-to-ml-ready",
+    title: "From Raw CSV to ML-Ready Dataset in 5 Minutes",
+    excerpt: "A step-by-step walkthrough of uploading a messy real-world dataset and getting it production-ready.",
+    tag: "Tutorial",
+    readTime: "7 min read",
+    date: "2026-03-10",
+    author: "Ahmad Jamil",
+  },
+  {
+    slug: "feature-engineering-guide",
+    title: "Feature Engineering Without Writing a Single Line of Code",
+    excerpt: "Feature engineering is the difference between a mediocre model and a great one. Here's how to do it faster.",
+    tag: "Feature Engineering",
+    readTime: "6 min read",
+    date: "2026-02-28",
+    author: "Ahmad Jamil",
+  },
+];
+
+function BlogCarousel() {
+  const [idx, setIdx] = useState(0);
+  const visible = 3;
+  const total = BLOG_POSTS.length;
+  const canPrev = idx > 0;
+  const canNext = idx + visible < total;
+
+  return (
+    <section style={{
+      padding: "96px 44px",
+      borderTop: "1px solid var(--border)",
+      background: "var(--bg)",
+    }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 48, gap: 20, flexWrap: "wrap" }}>
+          <div>
+            <Eyebrow>From the blog</Eyebrow>
+            <SectionTitle>Latest insights</SectionTitle>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[canPrev, canNext].map((enabled, i) => (
+                <button
+                  key={i}
+                  onClick={() => setIdx(i === 0 ? idx - 1 : idx + 1)}
+                  disabled={!enabled}
+                  style={{
+                    width: 36, height: 36, borderRadius: "50%",
+                    border: "1px solid var(--border2)",
+                    background: "transparent",
+                    color: enabled ? "var(--text)" : "var(--text3)",
+                    cursor: enabled ? "pointer" : "default",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={e => { if (enabled) (e.currentTarget as HTMLButtonElement).style.background = "var(--bg3)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {i === 0
+                      ? <polyline points="15 18 9 12 15 6" />
+                      : <polyline points="9 18 15 12 9 6" />}
+                  </svg>
+                </button>
+              ))}
+            </div>
+            <a href="/blog" style={{
+              fontSize: 13, fontWeight: 500, color: "var(--text2)",
+              textDecoration: "none", fontFamily: T.font,
+              transition: "color 0.15s",
+            }}
+              onMouseEnter={e => (e.currentTarget.style.color = "var(--text)")}
+              onMouseLeave={e => (e.currentTarget.style.color = "var(--text2)")}
+            >View all →</a>
+          </div>
+        </div>
+
+        <div style={{ overflow: "hidden" }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${total}, 1fr)`,
+            gap: 16,
+            transform: `translateX(calc(-${idx} * (100% / ${total}) - ${idx} * 16px / ${total}))`,
+            transition: "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
+          }}>
+            {BLOG_POSTS.map((post) => (
+              <a
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                style={{
+                  display: "block", textDecoration: "none",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 14, padding: 28,
+                  transition: "border-color 0.2s, transform 0.2s",
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border2)";
+                  (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-3px)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
+                  (e.currentTarget as HTMLAnchorElement).style.transform = "none";
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, letterSpacing: "0.07em",
+                    textTransform: "uppercase" as const,
+                    color: "var(--text3)", background: "var(--bg3)",
+                    border: "1px solid var(--border)",
+                    borderRadius: T.pill, padding: "3px 10px", fontFamily: T.font,
+                  }}>{post.tag}</span>
+                  <span style={{ fontSize: 12, color: "var(--text3)", fontFamily: T.font }}>{post.readTime}</span>
+                </div>
+                <h3 style={{
+                  fontSize: 17, fontWeight: 500, letterSpacing: "-0.3px",
+                  color: "var(--text)", marginBottom: 10, lineHeight: 1.35, fontFamily: T.font,
+                }}>{post.title}</h3>
+                <p style={{
+                  fontSize: 13.5, color: "var(--text2)", lineHeight: 1.65,
+                  marginBottom: 20, fontFamily: T.font,
+                }}>{post.excerpt}</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 12.5, color: "var(--text2)", fontFamily: T.font }}>{post.author}</span>
+                  <span style={{ fontSize: 12, color: "var(--text3)", fontFamily: T.font }}>
+                    {new Date(post.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────
    CTA BANNER
 ───────────────────────────────────────────── */
 function CTABanner() {
@@ -1183,10 +1398,10 @@ function CTABanner() {
     }}>
       <Divider style={{ marginBottom: 52 }} />
       <h2 style={{ fontSize: "clamp(28px, 3.8vw, 44px)", fontWeight: 300, letterSpacing: "-0.04em", color: "var(--text)", marginBottom: 14, fontFamily: T.font }}>
-        Your data, prepped by AI.
+        Know your exact data. Every pipeline.
       </h2>
       <p style={{ fontSize: 16, color: "var(--text2)", marginBottom: 36, maxWidth: 480, margin: "0 auto 36px", fontFamily: T.font }}>
-        Join thousands of data scientists who've automated their preprocessing — and spend more time on model building.
+        Join thousands of data scientists who&apos;ve automated their preprocessing — and spend more time on what actually matters.
       </p>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
         <a href="/dashboard" style={{
@@ -1194,7 +1409,7 @@ function CTABanner() {
           background: "var(--text)", color: "var(--bg)",
           fontSize: 14, fontWeight: 500, borderRadius: T.pill, padding: "11px 24px",
           textDecoration: "none", fontFamily: T.font,
-        }}>Start free trial — no card needed</a>
+        }}>Start tracking free</a>
         <a href="/contact" style={{
           display: "inline-flex", alignItems: "center",
           background: "transparent", color: "var(--text)",
@@ -1213,6 +1428,7 @@ const FOOTER_LINKS: Record<string, { label: string; href: string }[]> = {
   Product:    [
     { label: "Features", href: "#product" },
     { label: "Pricing", href: "#pricing" },
+    { label: "Blog", href: "/blog" },
     { label: "Changelog", href: "#" },
     { label: "Roadmap", href: "#" },
     { label: "Status", href: "#" },
@@ -1331,12 +1547,14 @@ export default function PipelineLabs() {
         <main>
           <Hero />
           <Marquee />
+          <PainSection />
           <VideoSection />
           <HowItWorks />
           <SDKSection />
           <Features />
           <Stats />
           <Testimonials />
+          <BlogCarousel />
           <Pricing />
           <FAQ />
           <CTABanner />

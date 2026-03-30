@@ -105,6 +105,7 @@ function Nav({ theme, onToggle }: { theme: "light" | "dark"; onToggle: () => voi
   const navLinks = [
     { label: "Product", href: "#product" },
     { label: "How it works", href: "#how-it-works" },
+    { label: "Blog", href: "/blog" },
     { label: "Pricing", href: "#pricing" },
     { label: "Documentation", href: "https://pipeline.stldocs.app" },
   ];

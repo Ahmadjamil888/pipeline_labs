@@ -54,7 +54,7 @@ export async function GET(
     const columns = dataset.column_names?.map((name: string) => ({
       name,
       type: dataset.column_types?.[name] || 'unknown',
-      sample: Array.from(previewDf.column(name).values).slice(0, 5).map(String),
+      sample: Array.from(previewDf.column(name).values()).slice(0, 5).map(String),
     })) || [];
 
     return NextResponse.json({

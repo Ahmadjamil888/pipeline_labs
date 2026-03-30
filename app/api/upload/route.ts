@@ -274,11 +274,9 @@ async function finalizeChunkedUpload(sessionId: string, userId: string) {
         storage_url: publicUrl,
         file_size_bytes: fileInfo.fileSize,
         file_type: validatedType,
-        mime_type: getContentType(validatedType),
         row_count: rowCount,
         column_count: columnCount,
-        column_names: columnNames,
-        column_types: columnTypes,
+        columns: columnNames.map((name) => ({ name, type: columnTypes[name] ?? 'unknown' })),
         status: 'uploaded'
       })
       .select()
@@ -417,8 +415,7 @@ async function handleRegularUpload(formData: FormData, clerkUserId: string) {
       file_type: fileType,
       row_count: rowCount,
       column_count: columnCount,
-      column_names: columnNames,
-      column_types: columnTypes,
+      columns: columnNames.map((name) => ({ name, type: columnTypes[name] ?? 'unknown' })),
       status: 'uploaded'
     })
     .select()

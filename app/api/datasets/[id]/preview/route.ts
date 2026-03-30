@@ -50,12 +50,13 @@ export async function GET(
     const previewRows = Math.min(rows, df.shape[0]);
     const previewDf = df.head(previewRows);
 
-    // Build column info
-    const columns = dataset.column_names?.map((name: string) => ({
+    // Build column info — columns is stored as [{ name, type }]
+    const columnDefs: { name: string; type: string }[] = dataset.columns ?? [];
+    const columns = columnDefs.map(({ name, type }) => ({
       name,
-      type: dataset.column_types?.[name] || 'unknown',
+      type,
       sample: Array.from(previewDf.column(name).values()).slice(0, 5).map(String),
-    })) || [];
+    }));
 
     return NextResponse.json({
       columns,

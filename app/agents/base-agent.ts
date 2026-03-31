@@ -1,5 +1,5 @@
 import { Agent, AgentContext, AgentResult, AIProvider } from './types'
-import { AIService } from '../api/ai/route'
+import { AIService } from '@/lib/ai-service'
 
 export abstract class BaseAgent implements Agent {
   abstract name: string

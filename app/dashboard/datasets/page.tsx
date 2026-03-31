@@ -403,7 +403,7 @@ export default function DatasetsPage() {
                 {isProcessing ? (
                   <><Loader2 size={14} className="animate-spin" /> Processing...</>
                 ) : (
-                  <><Send size={14} /> Run Preprocessing</>
+                  <><Send size={14} /> Clean Dataset</>
                 )}
               </button>
             </div>

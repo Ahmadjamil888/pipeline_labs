@@ -224,7 +224,6 @@ function CheckItem({ children }: { children: React.ReactNode }) {
 ───────────────────────────────────────────── */
 function Logo({ theme, height = 28, fallbackId = "nav-logo-fb" }: { theme: Theme; height?: number; fallbackId?: string }) {
   const src = theme === "dark" ? "/logo-dark.png" : "/logo-light.png";
-  console.log("Logo component - theme:", theme, "src:", src); // Debug log
   return (
     <img
       src={src}
@@ -253,7 +252,7 @@ function Hero() {
             fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
             color: "var(--text3)", fontFamily: T.font,
           }}>
-            Pipeline Labs doesn&apos;t give tips. It tracks your real data.
+            Built for teams turning raw data into model-ready infrastructure.
           </span>
         </div>
         <h1 style={{
@@ -266,13 +265,13 @@ function Hero() {
           marginBottom: 18,
           fontFamily: T.font,
         }}>
-          Still using Excel<br />for your data pipelines?
+          Redefine how machine learning teams<br />build with data.
         </h1>
         <p style={{
           fontSize: 16, color: "var(--text2)", lineHeight: 1.65,
           maxWidth: 520, fontFamily: T.font, fontWeight: 400, marginBottom: 32,
         }}>
-          Track datasets, automate preprocessing, and generate clean ML-ready data — all in one place.
+          Transform raw operational data into validated, training-ready datasets with prompt-driven cleaning, schema-aware chunking, and reproducible ML workflows.
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 60 }}>
           {isSignedIn ? (
@@ -283,7 +282,7 @@ function Hero() {
               borderRadius: T.pill, padding: "11px 24px",
               border: "none", cursor: "pointer", textDecoration: "none",
               fontFamily: T.font, transition: "opacity 0.15s",
-            }}>Start tracking free ↓</a>
+            }}>Start building ↓</a>
           ) : (
             <SignInButton mode="modal" fallbackRedirectUrl="/dashboard">
               <button style={{
@@ -293,7 +292,7 @@ function Hero() {
                 borderRadius: T.pill, padding: "11px 24px",
                 border: "none", cursor: "pointer", textDecoration: "none",
                 fontFamily: T.font, transition: "opacity 0.15s",
-              }}>Start tracking free ↓</button>
+              }}>Start building ↓</button>
             </SignInButton>
           )}
           <a href="#how-it-works" style={{
@@ -307,7 +306,7 @@ function Hero() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            Watch demo
+            See platform flow
           </a>
         </div>
       </div>
@@ -344,35 +343,35 @@ function Hero() {
             <div style={{ display: "grid", gridTemplateColumns: "260px 1fr 1fr" }}>
               {/* Left */}
               <div style={{ background: "#202020", borderRight: "1px solid rgba(255,255,255,.06)", padding: "12px 0" }}>
-                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "rgba(255,255,255,.3)", padding: "0 13px 7px", fontFamily: T.font }}>Deploying 2</div>
+                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "rgba(255,255,255,.3)", padding: "0 13px 7px", fontFamily: T.font }}>Active datasets 2</div>
                 <div style={{ padding: "7px 13px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "rgba(255,255,255,.8)", marginBottom: 2, fontFamily: T.font }}>
                     <div className="spin" style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.2)", borderTopColor: "#fff", flexShrink: 0 }} />
-                    auth-service → prod
+                    customer-events.csv
                   </div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.3)", paddingLeft: 16, fontFamily: T.font }}>Canary at 15%…</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.3)", paddingLeft: 16, fontFamily: T.font }}>Chunk plan running...</div>
                 </div>
-                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "rgba(255,255,255,.3)", padding: "10px 13px 7px", fontFamily: T.font }}>Ready for review 4</div>
+                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "rgba(255,255,255,.3)", padding: "10px 13px 7px", fontFamily: T.font }}>Validated outputs 4</div>
                 <div style={{ padding: "7px 13px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "rgba(255,255,255,.8)", marginBottom: 2, fontFamily: T.font }}>
                     <div style={{ width: 12, height: 12, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.28)", flexShrink: 0, position: "relative" }}>
                       <div style={{ position: "absolute", top: 1.5, left: 2.5, width: 5, height: 3, borderLeft: "1.5px solid rgba(255,255,255,.5)", borderBottom: "1.5px solid rgba(255,255,255,.5)", transform: "rotate(-45deg)" }} />
                     </div>
-                    api-gateway v3.1
+                    churn_training_set_v3
                     <span style={{ fontSize: 10.5, color: "rgba(255,255,255,.25)", marginLeft: "auto", fontFamily: T.font }}>now</span>
                   </div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.3)", paddingLeft: 16, fontFamily: T.font }}>Done. Zero downtime achieved.</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.3)", paddingLeft: 16, fontFamily: T.font }}>Validation passed. Export ready.</div>
                 </div>
               </div>
 
               {/* Mid */}
               <div style={{ background: "#1a1a1a", borderRight: "1px solid rgba(255,255,255,.06)", display: "flex", flexDirection: "column" }}>
-                <div style={{ padding: "12px 15px 10px", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.82)", borderBottom: "1px solid rgba(255,255,255,.06)", fontFamily: T.font }}>Manage Production Deploy</div>
+                <div style={{ padding: "12px 15px 10px", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.82)", borderBottom: "1px solid rgba(255,255,255,.06)", fontFamily: T.font }}>Define dataset objective</div>
                 <div style={{ margin: "12px 14px", background: "#2a2a2a", borderRadius: 7, padding: "11px 13px", fontSize: 12.5, color: "rgba(255,255,255,.72)", lineHeight: 1.5, border: "1px solid rgba(255,255,255,.06)", fontFamily: T.font }}>
-                  let's deploy the new payment service to production with canary rollout and auto-rollback on p99 &gt; 200ms
+                  clean this customer events dataset, standardize acquisition channels, repair missing values, and prepare a feature table for churn prediction
                 </div>
                 <div style={{ padding: "2px 14px", display: "flex", flexDirection: "column", gap: 5 }}>
-                  {[["Thought","6s",""],["Read","deployment.yaml","#7cb8f0"],["Checked","p99 latency baseline",""]].map(([k,v,c],i) => (
+                  {[["Plan","6s",""],["Read","dataset.cleaning.yaml","#7cb8f0"],["Checked","null and drift summary",""]].map(([k,v,c],i) => (
                     <div key={i} style={{ fontSize: 11.5, color: "rgba(255,255,255,.35)", display: "flex", gap: 8, fontFamily: T.font }}>
                       <span style={{ color: "rgba(255,255,255,.22)" }}>{k}</span>
                       <span style={{ color: c || "inherit" }}>{v}</span>
@@ -384,7 +383,7 @@ function Hero() {
               {/* Right */}
               <div style={{ background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
                 <div style={{ display: "flex", alignItems: "center", height: 36, padding: "0 4px", gap: 2, borderBottom: "1px solid rgba(255,255,255,.06)" }}>
-                  {[["deployment.yaml", true],["metrics.ts", false]].map(([label,active],i) => (
+                  {[["dataset.cleaning.yaml", true],["preview_stats.py", false]].map(([label,active],i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 5, fontSize: 12, color: active ? "rgba(255,255,255,.82)" : "rgba(255,255,255,.38)", background: active ? "rgba(255,255,255,.07)" : "transparent", fontFamily: T.font }}>
                       {label as string}
                       {active && <span style={{ fontSize: 9, color: "rgba(255,255,255,.22)" }}>✕</span>}
@@ -393,16 +392,16 @@ function Hero() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 13px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
                   <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.35)", display: "flex", gap: 4, fontFamily: T.font }}>
-                    <span>Pipelines</span><span style={{ color: "rgba(255,255,255,.18)" }}>›</span><span style={{ color: "rgba(255,255,255,.62)" }}>deployment.yaml</span>
+                    <span>Workflows</span><span style={{ color: "rgba(255,255,255,.18)" }}>›</span><span style={{ color: "rgba(255,255,255,.62)" }}>dataset.cleaning.yaml</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,.38)", fontFamily: T.font }}>
                     Agent 1 ∨
-                    <button style={{ background: "#e0e0e0", color: "#0a0a0a", border: "none", borderRadius: 4, padding: "3px 11px", fontSize: 11.5, fontWeight: 700, cursor: "pointer", fontFamily: T.font }}>Deploy</button>
+                    <button style={{ background: "#e0e0e0", color: "#0a0a0a", border: "none", borderRadius: 4, padding: "3px 11px", fontSize: 11.5, fontWeight: 700, cursor: "pointer", fontFamily: T.font }}>Run</button>
                   </div>
                 </div>
                 <div style={{ padding: "16px 18px" }}>
-                  <div style={{ fontSize: 19, fontWeight: 700, color: "#fff", marginBottom: 8, letterSpacing: "-0.3px", fontFamily: T.font }}>Payment Service Rollout</div>
-                  <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.48)", lineHeight: 1.6, maxWidth: 400, fontFamily: T.font }}>Canary deployment to us-east-1 with automated rollback on latency or error-rate thresholds.</div>
+                  <div style={{ fontSize: 19, fontWeight: 700, color: "#fff", marginBottom: 8, letterSpacing: "-0.3px", fontFamily: T.font }}>Training Dataset Pipeline</div>
+                  <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.48)", lineHeight: 1.6, maxWidth: 400, fontFamily: T.font }}>Schema-aware chunking, canonical value mapping, and deterministic validation before export to training and evaluation workflows.</div>
                 </div>
               </div>
             </div>
@@ -513,16 +512,16 @@ function VideoSection() {
 ───────────────────────────────────────────── */
 const STEPS = [
   {
-    n: "01", title: "Upload your dataset",
-    body: "Drag and drop any CSV or Excel file. We automatically detect column types and data quality issues.",
+    n: "01", title: "Ingest raw data from anywhere",
+    body: "Upload source datasets and Pipeline Labs profiles schema, types, drift, null patterns, and failure points before the first transformation runs.",
   },
   {
-    n: "02", title: "Describe what you need",
+    n: "02", title: "Define the target dataset in plain English",
     body: "Type natural language instructions like \"Normalize features and encode categories\" — our AI understands your intent.",
   },
   {
-    n: "03", title: "Get clean data instantly",
-    body: "Download your preprocessed dataset in seconds, ready for machine learning models. No coding required.",
+    n: "03", title: "Ship validated training assets",
+    body: "Run chunk-aware AI cleaning, preserve row integrity, and export datasets that are ready for training, evaluation, and reproducible ML workflows.",
   },
 ];
 
@@ -531,7 +530,7 @@ function HowItWorks() {
     <section style={{ padding: "96px 44px", maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <Eyebrow>Process</Eyebrow>
-        <SectionTitle style={{ margin: "0 auto 12px" }}>From push to production, fully autonomous</SectionTitle>
+        <SectionTitle style={{ margin: "0 auto 12px" }}>From raw sources to production-grade ML datasets</SectionTitle>
       </div>
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
@@ -728,9 +727,9 @@ function SDKSection() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "flex-start", marginBottom: 44 }}>
           <div>
             <Eyebrow>SDK</Eyebrow>
-            <SectionTitle>Integrate in minutes,<br />deploy in seconds</SectionTitle>
+            <SectionTitle>Integrate in minutes,<br />operationalize data workflows</SectionTitle>
             <SubText style={{ marginBottom: 28 }}>
-              Pipeline Labs ships a first-class Python SDK. Authenticate once, then programmatically manage deployments, health checks, and rollbacks — all from your own scripts or CI.
+              Pipeline Labs ships a first-class Python SDK. Authenticate once, then orchestrate dataset ingestion, processing jobs, previews, downloads, and validation directly from your notebooks, apps, or CI pipelines.
             </SubText>
             <div style={{ display: "flex", gap: 10 }}>
               <a
@@ -803,7 +802,7 @@ function SDKSection() {
                 fontSize: 12, color: "rgba(255,255,255,.82)",
                 fontFamily: T.mono,
               }}>
-                deploy.py
+                pipeline_dataset.py
               </div>
             </div>
             <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
@@ -893,10 +892,10 @@ function SDKSection() {
 ───────────────────────────────────────────── */
 function PainSection() {
   const pains = [
-    "Spreadsheets that break on large datasets",
-    "No clear view of data quality or missing values",
-    "Hours wasted on manual cleaning and formatting",
-    "No reproducible pipeline — just one-off scripts",
+    "Raw tables arrive with drift, nulls, and category inconsistencies",
+    "Feature preparation logic lives in notebooks no one can reliably reuse",
+    "Data quality checks happen late, after models have already been trained",
+    "Every new dataset turns into another one-off cleanup project",
   ];
   return (
     <section style={{
@@ -907,7 +906,7 @@ function PainSection() {
       <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
         <div>
           <Eyebrow>Sound familiar?</Eyebrow>
-          <SectionTitle>Most data teams are still doing this the hard way</SectionTitle>
+          <SectionTitle>Most ML teams still rebuild data preparation from scratch</SectionTitle>
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 14, marginTop: 24 }}>
             {pains.map((p) => (
               <li key={p} style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: 14, color: "var(--text2)", fontFamily: T.font, lineHeight: 1.5 }}>
@@ -924,10 +923,10 @@ function PainSection() {
           <div style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text3)", marginBottom: 18, fontFamily: T.font }}>Pipeline Labs fixes all of this</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {[
-              "Upload any CSV or Excel — no size limits on Pro",
-              "Instant data quality report on every upload",
-              "AI handles cleaning, encoding, and normalization",
-              "Reproducible pipelines you can export as Python code",
+              "Ingest structured data and profile it before transformation",
+              "Generate schema-aware cleaning plans from a prompt",
+              "Run chunked processing with validation and deterministic fallbacks",
+              "Export reproducible datasets and code-backed workflows",
             ].map((item) => (
               <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13.5, color: "var(--text2)", fontFamily: T.font, lineHeight: 1.5 }}>
                 <span style={{ color: "var(--text2)", flexShrink: 0, marginTop: 1 }}>✓</span>
@@ -943,20 +942,20 @@ function PainSection() {
 
 
 const FEATURES = [
-  { title: "AI-Powered Preprocessing", body: "Describe what you need in plain English. Our AI translates your instructions into optimized data transformations." },
-  { title: "Automatic Feature Engineering",  body: "Smart encoding, normalization, and scaling. Handles categorical variables, missing values, and outliers automatically." },
-  { title: "Data Quality Detection",  body: "Identifies data quality issues, type mismatches, and inconsistencies before they break your models." },
-  { title: "Train-Test Splitting",   body: "Automatically splits your data for ML training. Configurable ratios with optional stratification." },
-  { title: "Multi-Format Support",   body: "Import from CSV, Excel, JSON, or Parquet. Export clean data in any format your models need." },
-  { title: "No-Code Data Pipelines", body: "Build complex preprocessing pipelines without writing a single line of code. Perfect for teams of all skill levels." },
+  { title: "AI-Native Data Transformation", body: "Describe the target dataset in plain English. Pipeline Labs turns that intent into structured transformations, dataset rules, and execution steps." },
+  { title: "Schema-Aware Cleaning Engine",  body: "Chunked processing preserves row integrity across large datasets while standardizing categories, repairing missing values, and enforcing consistent transformations." },
+  { title: "Dataset Reliability Checks",  body: "Detect type drift, invalid values, null clusters, and hidden inconsistencies before they leak into training, evaluation, or production scoring." },
+  { title: "Reusable ML Data Workflows",   body: "Package ingestion, transformation, and export into repeatable workflows that your team can reuse across experiments and production pipelines." },
+  { title: "Structured Ingestion and Export",   body: "Bring in warehouse extracts and structured files, then export validated dataset artifacts that plug directly into analytics, feature stores, and training systems." },
+  { title: "Human-in-the-Loop Automation", body: "Give analysts and ML engineers the same system: prompt-driven automation when it is fast, programmable control when it matters, and auditability throughout." },
 ];
 
 function Features() {
   return (
     <section id="product" style={{ padding: "96px 44px", maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 48, gap: 32, flexWrap: "wrap" }}>
-        <div><Eyebrow>Features</Eyebrow><SectionTitle>ML data preprocessing,<br />powered by AI</SectionTitle></div>
-        <SubText>Full data preparation pipeline — from raw data to ML-ready datasets in minutes.</SubText>
+        <div><Eyebrow>Features</Eyebrow><SectionTitle>AI data infrastructure,<br />built for machine learning</SectionTitle></div>
+        <SubText>From ingestion to validated export, Pipeline Labs gives ML teams a repeatable system for turning messy data into production-ready training assets.</SubText>
       </div>
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(2, 1fr)",
@@ -989,10 +988,10 @@ function Features() {
    STATS
 ───────────────────────────────────────────── */
 const STATS = [
-  { n: "95", s: "%", label: "Data quality improvement" },
-  { n: "10", s: "×", label: "Faster preprocessing" },
-  { n: "50", s: "K+", label: "Datasets processed" },
-  { n: "<5", s: "min", label: "Average processing time" },
+  { n: "95", s: "%", label: "Fewer bad rows in training" },
+  { n: "10", s: "×", label: "Faster dataset iteration" },
+  { n: "50", s: "K+", label: "Workflow runs orchestrated" },
+  { n: "<5", s: "min", label: "Time to clean preview" },
 ];
 
 function Stats() {
@@ -1005,7 +1004,7 @@ function Stats() {
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 44px" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <Eyebrow>By the numbers</Eyebrow>
-          <SectionTitle style={{ margin: "0 auto" }}>Trusted by teams shipping fast</SectionTitle>
+          <SectionTitle style={{ margin: "0 auto" }}>Designed for teams building serious ML systems</SectionTitle>
         </div>
         <div style={{
           display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
@@ -1029,9 +1028,9 @@ function Stats() {
    TESTIMONIALS
 ───────────────────────────────────────────── */
 const TESTIMONIALS = [
-  { stars: 5, text: "\"Saved me hours during tax filing. I used to dread it — now I just export and I'm done.\"", initials: "AS", name: "Aryan Shah", role: "Data Scientist · Nexus Finance", grad: "135deg,#555,#222" },
-  { stars: 5, text: "\"Replaced my Excel completely. I describe what I need and get perfect, clean data every time.\"", initials: "LK", name: "Laura Kim", role: "ML Engineer · Orbit AI", grad: "135deg,#444,#111" },
-  { stars: 5, text: "\"Our team processed 10,000+ datasets last quarter with zero manual coding. The ROI is incredible.\"", initials: "MR", name: "Marcus Reid", role: "Head of Analytics · Stackway", grad: "135deg,#666,#333" },
+  { stars: 5, text: "\"Pipeline Labs gave us a reliable path from raw warehouse extracts to model-ready datasets without bespoke cleanup scripts in every repo.\"", initials: "AS", name: "Aryan Shah", role: "Data Scientist · Nexus Finance", grad: "135deg,#555,#222" },
+  { stars: 5, text: "\"We stopped treating preprocessing as throwaway work. Now dataset logic is explicit, reusable, and fast enough to keep up with product experimentation.\"", initials: "LK", name: "Laura Kim", role: "ML Engineer · Orbit AI", grad: "135deg,#444,#111" },
+  { stars: 5, text: "\"The biggest win is consistency. Feature naming, missing value handling, and category normalization stay aligned across teams and across time.\"", initials: "MR", name: "Marcus Reid", role: "Head of Analytics · Stackway", grad: "135deg,#666,#333" },
 ];
 
 function Testimonials() {
@@ -1039,7 +1038,7 @@ function Testimonials() {
     <section style={{ padding: "96px 44px", maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <Eyebrow>Testimonials</Eyebrow>
-        <SectionTitle style={{ margin: "0 auto" }}>Loved by engineering teams</SectionTitle>
+        <SectionTitle style={{ margin: "0 auto" }}>Used by teams modernizing ML operations</SectionTitle>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
         {TESTIMONIALS.map((t) => (
@@ -1077,18 +1076,18 @@ function Testimonials() {
 ───────────────────────────────────────────── */
 const PLANS = [
   {
-    name: "Free", monthly: 0, annual: 0, desc: "Perfect for getting started with AI data preprocessing. No credit card required.",
-    features: ["Up to 5 datasets","1,000 rows per dataset","50 processing jobs/month","Basic transformations (normalize, encode)","CSV & Excel support","Email support"],
+    name: "Free", monthly: 0, annual: 0, desc: "For early-stage teams proving out AI-native dataset cleaning and prompt-driven transformations.",
+    features: ["Up to 5 datasets","1,000 rows per dataset","50 processing jobs/month","Basic transformations (normalize, encode)","Structured file uploads","Email support"],
     cta: "Get started free", featured: false,
   },
   {
-    name: "Pro", monthly: 29, annual: 22, desc: "For professionals who need more power and flexibility.",
-    features: ["Unlimited datasets","50,000 rows per dataset","Unlimited processing","Advanced AI transformations","All file formats (CSV, Excel, JSON, Parquet)","Train/test splitting","Export Python code","Priority email support"],
+    name: "Pro", monthly: 29, annual: 22, desc: "For production practitioners managing larger datasets, faster iteration, and richer workflow control.",
+    features: ["Unlimited datasets","50,000 rows per dataset","Unlimited processing","Advanced AI transformations","Structured files + dataset exports","Train/test splitting","Export Python code","Priority email support"],
     cta: "Start 14-day free trial", featured: true,
   },
   {
-    name: "Team", monthly: 109, annual: 82, desc: "For data science teams building ML pipelines together.",
-    features: ["Everything in Pro","Up to 20 team members","250,000 rows per dataset","Custom preprocessing templates","SSO / SAML","Audit logs & data lineage","Dedicated Slack support","On-premise deployment option"],
+    name: "Team", monthly: 109, annual: 82, desc: "For organizations standardizing how datasets are cleaned, validated, and handed off to training pipelines.",
+    features: ["Everything in Pro","Up to 20 team members","250,000 rows per dataset","Custom preprocessing templates","SSO / SAML","Audit logs & data lineage","Dedicated Slack support","Private deployment option"],
     cta: "Start 14-day free trial", featured: false,
   },
 ];
@@ -1103,8 +1102,8 @@ function Pricing() {
     }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "96px 44px", textAlign: "center" }}>
         <Eyebrow>Pricing</Eyebrow>
-        <SectionTitle style={{ margin: "0 auto 12px" }}>Simple, transparent pricing</SectionTitle>
-        <SubText style={{ margin: "0 auto 32px" }}>Start free. Scale when you're ready. No surprise bills.</SubText>
+        <SectionTitle style={{ margin: "0 auto 12px" }}>Pricing for teams building data leverage</SectionTitle>
+        <SubText style={{ margin: "0 auto 32px" }}>Start with a single workflow. Scale into shared infrastructure as your dataset volume and model complexity grow.</SubText>
 
         <div style={{
           display: "inline-flex", alignItems: "center",
@@ -1193,9 +1192,9 @@ function Pricing() {
 ───────────────────────────────────────────── */
 const FAQS = [
   { q: "Does Pipeline Labs have access to my data?", a: "Your data is processed securely and never used to train our models. All processing happens in isolated environments, and your data is encrypted in transit and at rest. You can request complete deletion at any time." },
-  { q: "What file formats are supported?", a: "We support CSV, Excel (XLSX/XLS), JSON, and Parquet files. You can also export your processed data in any of these formats. We're constantly adding support for more data formats based on customer feedback." },
-  { q: "How does the AI understand my preprocessing instructions?", a: "Our AI has been trained on thousands of data science workflows. Simply describe what you need in plain English (e.g., \"normalize numeric features, encode categories, remove outliers\") and the AI translates this into optimized data transformations." },
-  { q: "Can I see the code generated by the AI?", a: "Yes! Pro and Team plans include code export. You can download the Python/pandas code for any preprocessing pipeline, which is perfect for learning, auditing, or integrating into existing workflows." },
+  { q: "What file formats are supported?", a: "Pipeline Labs supports CSV, Excel (XLSX/XLS), JSON, and Parquet inputs today, with exports available in the same structured formats for downstream training and analytics workflows." },
+  { q: "How does Pipeline Labs stay consistent across large datasets?", a: "Our AI has been trained on thousands of data science workflows. Simply describe what you need in plain English (e.g., \"normalize numeric features, encode categories, remove outliers\") and the AI translates this into optimized data transformations." },
+  { q: "Can I see the code generated by the AI?", a: "Yes. Pro and Team plans include code export so your team can inspect generated Python workflows, audit transformations, and move validated logic into existing ML pipelines when needed." },
   { q: "How does billing work for the Team plan?", a: "The Team plan is $109/month (or $82/month billed annually) for up to 20 team members. You're only charged after your free trial ends. Additional seats beyond 20 can be added for $5/user/month." },
 ];
 
@@ -1242,7 +1241,7 @@ function FAQ() {
 const BLOG_POSTS = [
   {
     slug: "ai-powered-data-preprocessing",
-    title: "How AI Is Changing Data Preprocessing Forever",
+    title: "How AI Data Infrastructure Changes ML Velocity",
     excerpt: "Manual data cleaning is the biggest time sink in ML workflows. Here's how AI is finally fixing that.",
     tag: "AI & ML",
     readTime: "5 min read",
@@ -1251,7 +1250,7 @@ const BLOG_POSTS = [
   },
   {
     slug: "from-csv-to-ml-ready",
-    title: "From Raw CSV to ML-Ready Dataset in 5 Minutes",
+    title: "From Raw Data to Production-Ready Training Set",
     excerpt: "A step-by-step walkthrough of uploading a messy real-world dataset and getting it production-ready.",
     tag: "Tutorial",
     readTime: "7 min read",
@@ -1260,7 +1259,7 @@ const BLOG_POSTS = [
   },
   {
     slug: "feature-engineering-guide",
-    title: "Feature Engineering Without Writing a Single Line of Code",
+    title: "Operationalizing Feature Engineering with AI Workflows",
     excerpt: "Feature engineering is the difference between a mediocre model and a great one. Here's how to do it faster.",
     tag: "Feature Engineering",
     readTime: "6 min read",
@@ -1398,7 +1397,7 @@ function CTABanner() {
     }}>
       <Divider style={{ marginBottom: 52 }} />
       <h2 style={{ fontSize: "clamp(28px, 3.8vw, 44px)", fontWeight: 300, letterSpacing: "-0.04em", color: "var(--text)", marginBottom: 14, fontFamily: T.font }}>
-        Know your exact data. Every pipeline.
+        Build the data layer your models deserve.
       </h2>
       <p style={{ fontSize: 16, color: "var(--text2)", marginBottom: 36, maxWidth: 480, margin: "0 auto 36px", fontFamily: T.font }}>
         Join thousands of data scientists who&apos;ve automated their preprocessing — and spend more time on what actually matters.
@@ -1409,7 +1408,7 @@ function CTABanner() {
           background: "var(--text)", color: "var(--bg)",
           fontSize: 14, fontWeight: 500, borderRadius: T.pill, padding: "11px 24px",
           textDecoration: "none", fontFamily: T.font,
-        }}>Start tracking free</a>
+        }}>Start building</a>
         <a href="/contact" style={{
           display: "inline-flex", alignItems: "center",
           background: "transparent", color: "var(--text)",
@@ -1465,7 +1464,7 @@ function Footer({ theme }: { theme: Theme }) {
             <Logo theme={theme} height={26} fallbackId="ft-logo-fb" />
             <span id="ft-logo-fb" style={{ display: "none", fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px", color: "var(--text)", marginBottom: 14 }}>Pipeline Labs</span>
             <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.65, maxWidth: 240, marginBottom: 22, marginTop: 14 }}>
-              AI-powered data preprocessing that cleans, transforms, and prepares your data for machine learning — automatically.
+              AI data infrastructure for transforming raw datasets into validated, training-ready assets and repeatable ML workflows.
             </p>
             <div style={{ display: "flex", gap: 8 }}>
               {[

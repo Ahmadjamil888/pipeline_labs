@@ -1,71 +1,58 @@
 openapi: 3.1.0
 info:
-  title: Pipeline Labs - ML Data Preprocessing API
+  title: Pipeline Labs SDK API
+  version: 1.0.0
   description: |
-    AI-powered ML data preprocessing platform. Upload datasets, describe transformations
-    in natural language, and get clean, ML-ready data automatically.
+    Curated SDK surface for Stainless. This spec is intentionally limited to the
+    most relevant programmatic routes for dataset ingestion, AI processing, job
+    tracking, downloads, chat, auth verification, billing, and health.
 
-    ## Authentication
-    All protected routes require a Clerk JWT passed as `Authorization: Bearer <token>`.
-
-    ## Chunked Upload
-    Files > 50 MB must use the chunked upload flow:
-    1. `POST /api/upload` with `{ action: "init", filename, fileSize, fileType, totalChunks }`
-    2. `POST /api/upload` (multipart) with each chunk: `sessio
 servers:
   - url: https://pipeline-labs.vercel.app
-    description: Production API
+    description: Production
 
 security:
   - bearerAuth: []
   - apiKeyAuth: []
 
 tags:
+  - name: Auth
   - name: Upload
-    description: File upload operations for datasets
+  - name: Datasets
+  - name: Processing
   - name: Chat
-    description: AI chat for data preprocessing guidance
-  - name: Datasets
-    description: Dataset management and retrieval
-  - name: Processing
-    description: AI-powered data preprocessing operations
   - name: Billing
-    description: Subscription and billing management via Polar
   - name: Health
-    description: API health and status checks
- - name: Chat
-    description: AI agent chat for preprocessing guidance
-  - name: Datasets
-    description: Dataset CRUD and file operations
-  - name: Processing
-    description: AI-powered preprocessing pipeline
-  - name: AI Providers
-    description: Direct provider endpoints (Groq, Gemini, DeepSeek)
-  - name: Billing
-    description: Subscription and usage via Polar
-  - name: Webhooks
-    description: Incoming webhooks from third-party services
-  - name: Health
-    description: API health checks
 
 paths:
-
-  # ── UPLOAD ────────────────────────────────────────────────────────────────
+  /api/auth/verify-key:
+    get:
+      operationId: verifyApiKey
+      tags: [Auth]
+      summary: Verify a generated user API key
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: API key is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyApiKeyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/upload:
     post:
-      summary: Upload dataset (simple or chunked)
-      description: |
-        Three modes depending on `Content-Type`:
-
-        **Simple upload** — `multipart/form-data` with `file` field (≤ 50 MB).
-
-        **Chunked init** — `application/json` `{ action: "init", filename, fileSize, fileType, totalChunks }`.
-
-        **Chunk upload** — `multipart/form-data` with `sessionId`, `chunkIndex`, `totalChunks`, `chunk`.
-
-        **Chunked finalize** — `application/json` `{ action: "finalize", sessionId }`.
+      operationId: uploadDataset
       tags: [Upload]
+      summary: Upload or finalize a dataset
+      description: |
+        Single upload endpoint supporting:
+        - simple multipart upload
+        - chunked upload init
+        - chunk upload
+        - chunked upload finalize
       requestBody:
         required: true
         content:
@@ -76,22 +63,17 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: Dataset file for simple upload
                 name:
                   type: string
-                  description: Optional custom dataset name
                 sessionId:
                   type: string
-                  description: Chunk session ID (chunk upload only)
                 chunkIndex:
                   type: integer
-                  description: Zero-based chunk index
                 totalChunks:
                   type: integer
                 chunk:
                   type: string
                   format: binary
-                  description: Chunk binary data
                 filename:
                   type: string
                 fileType:
@@ -103,7 +85,7 @@ paths:
                 - $ref: '#/components/schemas/ChunkFinalizeRequest'
       responses:
         '200':
-          description: Upload successful
+          description: Upload result
           content:
             application/json:
               schema:
@@ -112,14 +94,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
   /api/upload/chunk:
     post:
-      summary: Chunked upload (alternative endpoint)
-      description: Alternative chunked upload endpoint — same three-phase flow as `/api/upload`.
+      operationId: uploadDatasetChunk
       tags: [Upload]
+      summary: Compatibility alias for chunked uploads
+      description: Thin compatibility route that forwards to `/api/upload`.
       requestBody:
         required: true
         content:
@@ -143,143 +124,46 @@ paths:
                 - $ref: '#/components/schemas/ChunkFinalizeRequest'
       responses:
         '200':
-          description: Chunk received or upload finalized
+          description: Upload result
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UploadResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  # ── CHAT ──────────────────────────────────────────────────────────────────
-
-  /api/chat:
-    post:
-      summary: Chat with AI preprocessing agent
-      description: |
-        Routes the message to the best agent (MainAgent, DataAnalyzer, Planner, or Executor)
-        based on intent. When `datasetId` is provided the agent downloads and analyzes the
-        actual file before responding.
-      tags: [Chat]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [message]
-              properties:
-                message:
-                  type: string
-                  description: User message
-                datasetId:
-                  type: string
-                  format: uuid
-                  description: Dataset to analyze (agent fetches real data)
-                history:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/ChatMessage'
-                  description: Last N messages for context
-                provider:
-                  type: string
-                  enum: [groq, openrouter, deepseek, gemini]
-                  default: groq
-                model:
-                  type: string
-                  description: Model override for the selected provider
-      responses:
-        '200':
-          description: Agent response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  content:
-                    type: string
-                  agent:
-                    type: string
-                    enum: [MainAgent, DataAnalyzer, Planner, Executor]
-                  provider:
-                    type: string
-                  model:
-                    type: string
-                  actions:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AgentAction'
-                  downloadUrl:
-                    type: string
-                    format: uri
-                    nullable: true
-                  processingTime:
-                    type: integer
-                    description: Milliseconds
-    get:
-      summary: List available agents
-      tags: [Chat]
-      responses:
-        '200':
-          description: Agent list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  agents:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AgentInfo'
-
-  # ── DATASETS ──────────────────────────────────────────────────────────────
 
   /api/datasets:
     get:
-      summary: List datasets
+      operationId: listDatasets
       tags: [Datasets]
+      summary: List datasets
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 10
-            maximum: 100
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [uploaded, processing, processed, completed, failed]
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10, maximum: 100 }
+        - in: query
+          name: status
+          schema: { type: string }
       responses:
         '200':
-          description: Paginated dataset list
+          description: Paginated datasets
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DatasetListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
     delete:
-      summary: Delete a dataset
-      description: Soft-deletes the dataset record and removes files from storage.
+      operationId: deleteDataset
       tags: [Datasets]
+      summary: Soft-delete a dataset
       parameters:
-        - name: id
-          in: query
+        - in: query
+          name: id
           required: true
-          schema:
-            type: string
-            format: uuid
+          schema: { type: string, format: uuid }
       responses:
         '200':
-          description: Deleted
+          description: Dataset deleted
           content:
             application/json:
               schema:
@@ -287,26 +171,20 @@ paths:
                 properties:
                   success:
                     type: boolean
-        '404':
-          $ref: '#/components/responses/NotFound'
 
   /api/datasets/{id}/preview:
     get:
-      summary: Preview dataset rows
+      operationId: previewDataset
       tags: [Datasets]
+      summary: Preview dataset rows and columns
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
-          schema:
-            type: string
-            format: uuid
-        - name: rows
-          in: query
-          schema:
-            type: integer
-            default: 10
-            maximum: 100
+          schema: { type: string, format: uuid }
+        - in: query
+          name: rows
+          schema: { type: integer, default: 10, maximum: 100 }
       responses:
         '200':
           description: Dataset preview
@@ -319,59 +197,38 @@ paths:
 
   /api/datasets/{id}/download:
     get:
-      summary: Download dataset file
+      operationId: downloadDataset
       tags: [Datasets]
+      summary: Download a source or processed dataset
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
-          schema:
-            type: string
-            format: uuid
-        - name: format
-          in: query
+          schema: { type: string, format: uuid }
+        - in: query
+          name: format
           schema:
             type: string
             enum: [csv, json, xlsx]
             default: csv
-        - name: processed
-          in: query
+        - in: query
+          name: processed
           schema:
             type: boolean
             default: false
-          description: Download the processed version if available
       responses:
         '200':
-          description: File download
-          content:
-            text/csv:
-              schema:
-                type: string
-                format: binary
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
-              schema:
-                type: string
-                format: binary
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  # ── PROCESSING ────────────────────────────────────────────────────────────
+          description: File stream
 
   /api/process:
     post:
-      summary: Preprocess dataset with AI
-      description: |
-        Downloads the dataset, calls an LLM to interpret the natural-language prompt,
-        applies transformations (normalize, encode, impute, outlier removal, etc.),
-        uploads the result to Supabase storage, and returns a download URL.
-
-        Set `options.async = true` to queue the job and poll `/api/process?jobId=<id>`.
+      operationId: createProcessingJob
       tags: [Processing]
+      summary: Create a chunked AI dataset processing job
+      description: |
+        Generates a chunked cleaning plan, processes dataset chunks with AI,
+        validates output against the original schema, stores the cleaned dataset,
+        and returns a processing summary plus download URL.
       requestBody:
         required: true
         content:
@@ -380,37 +237,29 @@ paths:
               $ref: '#/components/schemas/ProcessRequest'
       responses:
         '200':
-          description: Processing complete (synchronous)
+          description: Processing completed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProcessResponse'
-        '202':
-          description: Job queued (async mode)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProcessingJob'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
     get:
-      summary: Get async job status
+      operationId: getProcessingJob
       tags: [Processing]
+      summary: Get processing job status
       parameters:
-        - name: jobId
-          in: query
+        - in: query
+          name: jobId
           required: true
-          schema:
-            type: string
+          schema: { type: string, format: uuid }
       responses:
         '200':
-          description: Job status
+          description: Processing job state
           content:
             application/json:
               schema:
@@ -418,178 +267,63 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  # ── AI PROVIDERS ──────────────────────────────────────────────────────────
-
-  /api/ai:
+  /api/chat:
     post:
-      summary: Direct AI call (auto-routed)
-      description: Calls the configured default provider (OpenRouter).
-      tags: [AI Providers]
+      operationId: createChatCompletion
+      tags: [Chat]
+      summary: Send a message to the Pipeline Labs assistant
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AIRequest'
+              $ref: '#/components/schemas/ChatRequest'
       responses:
         '200':
-          description: AI response
+          description: Assistant response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AIResponse'
-
-  /api/ai/groq:
-    post:
-      summary: Groq inference
-      description: Direct call to Groq (llama-3.1-8b-instant / llama-3.3-70b-versatile).
-      tags: [AI Providers]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AIRequest'
+                $ref: '#/components/schemas/ChatResponse'
+    get:
+      operationId: listChatAgents
+      tags: [Chat]
+      summary: List available assistant agents
       responses:
         '200':
-          description: Groq response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AIResponse'
-
-  /api/ai/gemini:
-    post:
-      summary: Gemini inference
-      description: Direct call to Google Gemini (1.5-flash / 1.5-pro).
-      tags: [AI Providers]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AIRequest'
-      responses:
-        '200':
-          description: Gemini response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AIResponse'
-
-  /api/ai/deepseek:
-    post:
-      summary: DeepSeek inference
-      description: Direct call to DeepSeek (deepseek-chat / deepseek-reasoner).
-      tags: [AI Providers]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AIRequest'
-      responses:
-        '200':
-          description: DeepSeek response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AIResponse'
-
-  # ── BILLING ───────────────────────────────────────────────────────────────
+          description: Agent catalog
 
   /api/billing/subscription:
     get:
-      summary: Get subscription details
+      operationId: getSubscription
       tags: [Billing]
+      summary: Get subscription details
       responses:
         '200':
-          description: Subscription info
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Subscription'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Subscription information
 
   /api/billing/usage:
     get:
-      summary: Get usage statistics
+      operationId: getUsage
       tags: [Billing]
+      summary: Get current usage
       responses:
         '200':
-          description: Usage stats
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UsageStats'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  # ── WEBHOOKS ──────────────────────────────────────────────────────────────
-
-  /api/webhooks/clerk:
-    post:
-      summary: Clerk webhook receiver
-      description: Receives user lifecycle events from Clerk (user.created, user.updated, etc.) and syncs to Supabase profiles.
-      tags: [Webhooks]
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: Svix-signed Clerk webhook payload
-      responses:
-        '200':
-          description: Webhook processed
-        '400':
-          description: Invalid signature or payload
-
-  # ── HEALTH ────────────────────────────────────────────────────────────────
+          description: Usage information
 
   /api/health:
     get:
-      summary: Health check
-      description: Returns connectivity status for Supabase, Redis, and OpenRouter.
+      operationId: getHealth
       tags: [Health]
+      summary: Health check
       security: []
       responses:
         '200':
-          description: Health status
+          description: Service status
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum: [healthy, degraded, unhealthy]
-                  timestamp:
-                    type: string
-                    format: date-time
-                  responseTime:
-                    type: integer
-                    description: Milliseconds
-                  services:
-                    type: object
-                    properties:
-                      supabase:
-                        type: string
-                        enum: [connected, disconnected]
-                      redis:
-                        type: string
-                        enum: [connected, disconnected]
-                      openrouter:
-                        type: string
-                        enum: [available, unavailable]
-                  version:
-                    type: string
-                  environment:
-                    type: string
-
-# ── COMPONENTS ──────────────────────────────────────────────────────────────
+                $ref: '#/components/schemas/HealthResponse'
 
 components:
   securitySchemes:
@@ -597,7 +331,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Clerk session JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
 
   responses:
     BadRequest:
@@ -607,7 +344,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
     Unauthorized:
-      description: Authentication required
+      description: Unauthorized
       content:
         application/json:
           schema:
@@ -618,184 +355,59 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
 
   schemas:
-
-    # ── Upload ──────────────────────────────────────────────────────────────
-
     ChunkInitRequest:
       type: object
       required: [action, filename, fileSize, fileType, totalChunks]
       properties:
-        action:
-          type: string
-          enum: [init]
-        filename:
-          type: string
-        fileSize:
-          type: integer
-        fileType:
-          type: string
-          enum: [csv, xlsx, xls, json]
-        totalChunks:
-          type: integer
+        action: { type: string, enum: [init] }
+        filename: { type: string }
+        fileSize: { type: integer }
+        fileType: { type: string, enum: [csv, xlsx, xls, json] }
+        totalChunks: { type: integer }
 
     ChunkFinalizeRequest:
       type: object
       required: [action, sessionId]
       properties:
-        action:
-          type: string
-          enum: [finalize]
-        sessionId:
-          type: string
+        action: { type: string, enum: [finalize] }
+        sessionId: { type: string }
 
     UploadResponse:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        path:
-          type: string
-          description: Supabase storage path
-        publicUrl:
-          type: string
-          format: uri
-        name:
-          type: string
-        size:
-          type: integer
-        type:
-          type: string
-          enum: [csv, xlsx, xls, json]
-        rowCount:
-          type: integer
-        columnCount:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-        # Chunked init response fields
-        sessionId:
-          type: string
-          description: Present on init response
-        chunkSize:
-          type: integer
-          description: Present on init response
-        totalChunks:
-          type: integer
-          description: Present on init response
-
-    # ── Chat ────────────────────────────────────────────────────────────────
-
-    ChatMessage:
-      type: object
-      required: [role, content]
-      properties:
-        role:
-          type: string
-          enum: [user, assistant, system]
-        content:
-          type: string
-
-    AgentAction:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [preprocess, analyze, transform, download]
-        description:
-          type: string
-        payload:
-          type: object
-
-    AgentInfo:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        model:
-          type: string
-        provider:
-          type: string
-
-    # ── Datasets ────────────────────────────────────────────────────────────
+        id: { type: string, format: uuid }
+        path: { type: string }
+        publicUrl: { type: string, format: uri }
+        name: { type: string }
+        size: { type: integer }
+        type: { type: string }
+        rowCount: { type: integer }
+        columnCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        sessionId: { type: string }
+        chunkSize: { type: integer }
+        totalChunks: { type: integer }
 
     Dataset:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        user_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        original_filename:
-          type: string
-        file_type:
-          type: string
-          enum: [csv, xlsx, xls, json]
-        file_size_bytes:
-          type: integer
-        storage_path:
-          type: string
+        id: { type: string, format: uuid }
+        name: { type: string }
+        original_filename: { type: string }
+        file_type: { type: string }
+        file_size_bytes: { type: integer }
+        row_count: { type: integer }
+        column_count: { type: integer }
+        status: { type: string }
         storage_url:
           type: string
           format: uri
-        processed_path:
-          type: string
           nullable: true
-        row_count:
-          type: integer
-        column_count:
-          type: integer
-        column_names:
-          type: array
-          items:
-            type: string
-        column_types:
-          type: object
-          additionalProperties:
-            type: string
-        status:
-          type: string
-          enum: [uploaded, processing, processed, completed, failed]
-        processing_results:
-          type: object
-          nullable: true
-          properties:
-            operations_applied:
-              type: array
-              items:
-                type: string
-            original_shape:
-              type: array
-              items:
-                type: integer
-            processed_shape:
-              type: array
-              items:
-                type: integer
-            llm_instructions:
-              type: string
         created_at:
           type: string
           format: date-time
-        processed_at:
-          type: string
-          format: date-time
-          nullable: true
 
     DatasetListResponse:
       type: object
@@ -807,14 +419,10 @@ components:
         pagination:
           type: object
           properties:
-            page:
-              type: integer
-            limit:
-              type: integer
-            total:
-              type: integer
-            totalPages:
-              type: integer
+            page: { type: integer }
+            limit: { type: integer }
+            total: { type: integer }
+            totalPages: { type: integer }
 
     DatasetPreview:
       type: object
@@ -822,37 +430,29 @@ components:
         columns:
           type: array
           items:
-            type: string
+            type: object
+            properties:
+              name: { type: string }
+              type: { type: string }
+              sample:
+                type: array
+                items: { type: string }
         rows:
           type: array
           items:
-            type: array
-            items: {}
-        totalRows:
-          type: integer
-        totalColumns:
-          type: integer
-
-    # ── Processing ──────────────────────────────────────────────────────────
+            type: object
+        totalRows: { type: integer }
+        totalColumns: { type: integer }
 
     ProcessRequest:
       type: object
       required: [datasetId, prompt]
       properties:
-        datasetId:
-          type: string
-          format: uuid
-        prompt:
-          type: string
-          maxLength: 2000
-          description: Natural language preprocessing instructions
-          example: "Normalize numeric features, one-hot encode categoricals, remove outliers with IQR"
+        datasetId: { type: string, format: uuid }
+        prompt: { type: string, maxLength: 4000 }
         options:
           type: object
           properties:
-            async:
-              type: boolean
-              default: false
             outputFormat:
               type: string
               enum: [csv, json]
@@ -861,56 +461,39 @@ components:
     ProcessResponse:
       type: object
       properties:
-        datasetId:
-          type: string
-          format: uuid
-        processedDatasetId:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [completed, failed]
-        downloadUrl:
-          type: string
-          format: uri
-        previewUrl:
-          type: string
-          format: uri
+        jobId: { type: string, format: uuid }
+        datasetId: { type: string, format: uuid }
+        processedDatasetId: { type: string, format: uuid }
+        status: { type: string, enum: [completed] }
+        downloadUrl: { type: string, format: uri }
+        previewUrl: { type: string }
         summary:
           type: object
           properties:
-            originalRows:
-              type: integer
-            originalColumns:
-              type: integer
-            processedRows:
-              type: integer
-            processedColumns:
-              type: integer
+            originalRows: { type: integer }
+            originalColumns: { type: integer }
+            processedRows: { type: integer }
+            processedColumns: { type: integer }
             operationsApplied:
               type: array
-              items:
-                type: string
-            llmInstructions:
-              type: string
-            processingDurationMs:
-              type: integer
+              items: { type: string }
+            llmInstructions: { type: string }
+            processingDurationMs: { type: integer }
+            chunkCount: { type: integer }
+            chunkSize: { type: integer }
 
     ProcessingJob:
       type: object
       properties:
-        jobId:
-          type: string
-        datasetId:
+        jobId: { type: string, format: uuid }
+        datasetId: { type: string, format: uuid }
+        processedDatasetId:
           type: string
           format: uuid
-        status:
-          type: string
-          enum: [queued, processing, completed, failed]
-        progress:
-          type: integer
-          minimum: 0
-          maximum: 100
+          nullable: true
+        status: { type: string }
+        currentStep: { type: integer }
+        totalSteps: { type: integer }
         createdAt:
           type: string
           format: date-time
@@ -922,109 +505,67 @@ components:
           type: string
           format: date-time
           nullable: true
+        downloadUrl:
+          type: string
+          format: uri
+          nullable: true
+        previewData:
+          type: object
+          nullable: true
+        plan:
+          type: object
+          nullable: true
+        progressMessages:
+          type: array
+          items:
+            type: object
         error:
           type: string
           nullable: true
-        result:
-          $ref: '#/components/schemas/ProcessResponse'
-          nullable: true
 
-    # ── AI ──────────────────────────────────────────────────────────────────
-
-    AIRequest:
+    ChatRequest:
       type: object
       required: [message]
       properties:
-        message:
+        message: { type: string }
+        datasetId:
           type: string
-        systemPrompt:
-          type: string
-        history:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChatMessage'
-        model:
-          type: string
-        temperature:
-          type: number
-          minimum: 0
-          maximum: 2
-          default: 0.7
-        maxTokens:
-          type: integer
-          default: 1500
-
-    AIResponse:
-      type: object
-      properties:
-        content:
-          type: string
-        model:
-          type: string
+          format: uuid
+          nullable: true
         provider:
           type: string
-        usage:
-          type: object
-          properties:
-            prompt_tokens:
-              type: integer
-            completion_tokens:
-              type: integer
-            total_tokens:
-              type: integer
+          enum: [groq, openrouter, deepseek, gemini]
+        model:
+          type: string
+          nullable: true
 
-    # ── Billing ─────────────────────────────────────────────────────────────
-
-    Subscription:
+    ChatResponse:
       type: object
       properties:
-        id:
-          type: string
-        status:
-          type: string
-          enum: [active, canceled, past_due, unpaid, paused]
-        plan:
-          type: string
-          enum: [free, pro, team]
-        currentPeriodStart:
-          type: string
-          format: date-time
-        currentPeriodEnd:
-          type: string
-          format: date-time
-        cancelAtPeriodEnd:
-          type: boolean
+        content: { type: string }
+        agent: { type: string }
+        provider: { type: string }
+        model: { type: string }
 
-    UsageStats:
+    VerifyApiKeyResponse:
       type: object
       properties:
-        currentMonth:
+        valid: { type: boolean }
+        authType: { type: string, enum: [api_key] }
+        profile:
           type: object
-          properties:
-            datasetsUploaded:
-              type: integer
-            datasetsProcessed:
-              type: integer
-            rowsProcessed:
-              type: integer
-        limits:
+          nullable: true
+        apiKey:
           type: object
-          properties:
-            maxDatasets:
-              type: integer
-            maxRowsPerDataset:
-              type: integer
-            maxProcessingPerMonth:
-              type: integer
-        remaining:
-          type: object
-          properties:
-            datasets:
-              type: integer
-            processing:
-              type: integer
+          nullable: true
 
-    # ── Shared ──────────────────────────────────────────────────────────────
+    HealthResponse:
+      type: object
+      properties:
+        status: { type: string }
+        timestamp:
+          type: string
+          format: date-time
 
     Error:
       type: object
@@ -1032,9 +573,5 @@ components:
         error:
           type: object
           properties:
-            code:
-              type: string
-              example: BAD_REQUEST
-            message:
-              type: string
-              example: Missing required field
+            code: { type: string }
+            message: { type: string }

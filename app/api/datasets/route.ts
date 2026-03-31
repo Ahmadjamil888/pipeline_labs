@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { supabaseAdmin, STORAGE_BUCKETS, downloadFromStorage } from '@/lib/clerk-supabase';
-import { parseFile, dataframeToCsv, dataframeToJson, getDatasetStats } from '@/lib/preprocessing';
-import { getCache, setCache } from '@/lib/redis';
-import * as XLSX from 'xlsx';
+import { supabaseAdmin } from '@/lib/clerk-supabase';
+import { authenticateRequest } from '@/lib/request-auth';
+import { STORAGE_BUCKETS, deleteFromStorage } from '@/lib/server-storage';
 
 // List datasets
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
+    const requestAuth = await authenticateRequest(request);
+
+    if (!requestAuth) {
       return NextResponse.json(
         { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
         { status: 401 }
       );
     }
+    const profileId = requestAuth.profileId;
 
     // Parse query params
     const { searchParams } = new URL(request.url);
@@ -23,22 +22,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const status = searchParams.get('status');
 
-    // Resolve profile UUID
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('id')
-      .eq('clerk_user_id', userId)
-      .single();
-
-    if (profileError || !profile) {
-      return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
-    }
-
     // Build query
     let query = supabaseAdmin
       .from('datasets')
       .select('*', { count: 'exact' })
-      .eq('user_id', profile.id)
+      .eq('user_id', profileId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false });
 
@@ -79,14 +67,15 @@ export async function GET(request: NextRequest) {
 // Delete dataset
 export async function DELETE(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
+    const requestAuth = await authenticateRequest(request);
+
+    if (!requestAuth) {
       return NextResponse.json(
         { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
         { status: 401 }
       );
     }
+    const profileId = requestAuth.profileId;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -97,15 +86,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Resolve profile UUID
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('id')
-      .eq('clerk_user_id', userId)
-      .single();
-
-    const profileId = profile?.id || userId;
 
     // Get dataset to find storage paths
     const { data: dataset, error: fetchError } = await supabaseAdmin
@@ -123,13 +103,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete from storage
-    const pathsToDelete = [
-      dataset.storage_path,
-      dataset.processed_path,
-    ].filter(Boolean) as string[];
+    if (dataset.storage_path) {
+      await deleteFromStorage(STORAGE_BUCKETS.DATASETS, [dataset.storage_path]);
+    }
 
-    if (pathsToDelete.length > 0) {
-      await supabaseAdmin.storage.from('datasets').remove(pathsToDelete);
+    if (dataset.processed_path) {
+      await deleteFromStorage(STORAGE_BUCKETS.PROCESSED, [dataset.processed_path]);
     }
 
     // Soft delete in database

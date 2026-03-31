@@ -1,25 +1,22 @@
 "use client";
 
-import type { Metadata } from "next";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import { ThemeProvider, useTheme } from "./theme-provider";
 import { usePathname } from "next/navigation";
-
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+import Link from "next/link";
 
 const SITE_URL = "https://pipeline-labs.vercel.app";
-const SITE_NAME = "Pipeline AI";
-const TITLE = "Pipeline AI — AI-Powered ML Data Preprocessing";
+const SITE_NAME = "Pipeline Labs";
+const TITLE = "Pipeline Labs | AI Data Infrastructure for Machine Learning";
 const DESCRIPTION =
-  "Transform raw data into ML-ready datasets with AI-powered preprocessing. Natural language instructions, automatic transformations, and instant downloads.";
+  "Pipeline Labs turns messy operational data into training-ready datasets, reproducible transformations, and programmable ML data workflows.";
 const KEYWORDS =
-  "AI data preprocessing, ML data preparation, data cleaning, feature engineering, machine learning pipeline, data transformation, CSV preprocessing, Excel cleaning, dataset preparation";
+  "AI data infrastructure, machine learning data platform, dataset cleaning, ML preprocessing, feature engineering, data quality automation, training-ready datasets, data science platform";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -56,12 +53,12 @@ const jsonLd = {
     {
       "@type": "SoftwareApplication",
       "@id": `${SITE_URL}/#product`,
-      name: "Pipeline AI",
+      name: "Pipeline Labs",
       applicationCategory: "DataPreparationApplication",
       operatingSystem: "Linux, macOS, Windows",
       url: SITE_URL,
       description:
-        "AI-powered data preprocessing platform for machine learning workflows.",
+        "AI data infrastructure for transforming raw datasets into clean, validated, training-ready assets.",
       offers: [
         { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
         { "@type": "Offer", price: "29", priceCurrency: "USD", name: "Pro" },
@@ -132,7 +129,7 @@ function Nav({ theme, onToggle }: { theme: "light" | "dark"; onToggle: () => voi
       }}
     >
       {/* Logo */}
-      <a
+      <Link
         href="/"
         style={{
           display: "flex",
@@ -142,7 +139,7 @@ function Nav({ theme, onToggle }: { theme: "light" | "dark"; onToggle: () => voi
         }}
       >
         <Logo theme={theme} height={28} />
-      </a>
+      </Link>
 
       {/* Center links */}
       <ul
@@ -337,15 +334,10 @@ function Nav({ theme, onToggle }: { theme: "light" | "dark"; onToggle: () => voi
 
 function Header() {
   const { theme, toggleTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Don't show header on dashboard routes
-  if (!mounted || pathname?.startsWith('/dashboard')) {
+  if (pathname?.startsWith('/dashboard')) {
     return null;
   }
 
@@ -359,7 +351,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={cn("font-sans", geist.variable)}>
+      <html lang="en" className={cn("font-sans")} style={{ ["--font-sans" as string]: "'Helvetica World', Helvetica, Arial, sans-serif" }}>
         <head>
           <script
             type="application/ld+json"

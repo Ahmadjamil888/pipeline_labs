@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/clerk-supabase';
 import { getRedisClient } from '@/lib/redis';
+import { getStorageBackendName, isGcpStorageConfigured } from '@/lib/server-storage';
 
 export async function GET(request: NextRequest) {
   const checks = {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   try {
     const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
       headers: {
-        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
       },
     });
     checks.openrouter = response.ok;
@@ -60,6 +61,12 @@ export async function GET(request: NextRequest) {
       supabase: checks.supabase ? 'connected' : 'disconnected',
       redis: checks.redis ? 'connected' : 'disconnected',
       openrouter: checks.openrouter ? 'available' : 'unavailable',
+      storage: getStorageBackendName(),
+    },
+    storage: {
+      activeBackend: getStorageBackendName(),
+      gcpConfigured: isGcpStorageConfigured(),
+      supabaseFallbackEnabled: true,
     },
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',

@@ -1,5 +1,16 @@
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+export {
+  STORAGE_BUCKETS,
+  deleteFromStorage,
+  downloadFromStorage,
+  getPublicUrl,
+  getStorageAccessUrl,
+  getStorageBackendName,
+  isGcpStorageConfigured,
+  serverStorageSupabase as storageSupabaseAdmin,
+  storeFileBuffer,
+} from "@/lib/server-storage";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -59,64 +70,4 @@ export async function getCurrentUser() {
   }
 
   return existingUser;
-}
-
-// Storage bucket names
-export const STORAGE_BUCKETS = {
-  DATASETS: "datasets",
-  PROCESSED: "processed",
-  TEMP: "temp",
-} as const;
-
-// Helper to upload file to storage
-export async function uploadToStorage(
-  bucket: string,
-  path: string,
-  file: Buffer | Blob,
-  contentType: string
-) {
-  const { data, error } = await supabaseAdmin.storage
-    .from(bucket)
-    .upload(path, file, {
-      contentType,
-      upsert: true,
-    });
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
-}
-
-// Helper to get public URL
-export function getPublicUrl(bucket: string, path: string) {
-  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
-}
-
-// Helper to download file from storage
-export async function downloadFromStorage(bucket: string, path: string) {
-  const { data, error } = await supabaseAdmin.storage
-    .from(bucket)
-    .download(path);
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
-}
-
-// Helper to delete file from storage
-export async function deleteFromStorage(bucket: string, paths: string[]) {
-  const { data, error } = await supabaseAdmin.storage
-    .from(bucket)
-    .remove(paths);
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
 }

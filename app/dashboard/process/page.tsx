@@ -37,6 +37,7 @@ interface UploadedFile {
 
 interface ProcessingResult {
   datasetId: string;
+  processedDatasetId?: string;
   status: string;
   downloadUrl?: string;
   summary?: {
@@ -220,10 +221,10 @@ export default function DataProcessingPage() {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">
-            AI Data Preprocessing
+            AI Dataset Cleaning
           </h1>
           <p className="text-muted-foreground">
-            Upload your dataset, describe what you need, and let AI do the work
+            Upload your dataset, describe the cleaned training-ready output you want, and let AI process it chunk by chunk
           </p>
         </div>
 
@@ -314,7 +315,7 @@ export default function DataProcessingPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
-                Preprocessing Instructions
+                Cleaning Instructions
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -362,7 +363,7 @@ export default function DataProcessingPage() {
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    Run Preprocessing
+                    Clean Dataset
                   </>
                 )}
               </Button>
@@ -426,10 +427,10 @@ export default function DataProcessingPage() {
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => router.push(`/dashboard/datasets/${result.datasetId}`)}
+                  onClick={() => router.push(`/dashboard/datasets`)}
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  View Details
+                  View Datasets
                 </Button>
               </div>
             </CardContent>

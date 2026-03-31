@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { supabaseAdmin, STORAGE_BUCKETS, downloadFromStorage, getPublicUrl } from '@/lib/clerk-supabase';
+import { supabaseAdmin, STORAGE_BUCKETS, downloadFromStorage } from '@/lib/clerk-supabase';
 import { parseFile, dataframeToCsv, dataframeToJson } from '@/lib/preprocessing';
 import * as XLSX from 'xlsx';
+import { authenticateRequest } from '@/lib/request-auth';
 
 // Download dataset
 export async function GET(
@@ -11,14 +11,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const { userId } = await auth();
-    
-    if (!userId) {
+    const requestAuth = await authenticateRequest(request);
+
+    if (!requestAuth) {
       return NextResponse.json(
         { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
         { status: 401 }
       );
     }
+    const profileId = requestAuth.profileId;
 
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'csv';
@@ -29,7 +30,7 @@ export async function GET(
       .from('datasets')
       .select('*')
       .eq('id', id)
-      .eq('user_id', userId)
+      .eq('user_id', profileId)
       .single();
 
     if (datasetError || !dataset) {
@@ -86,7 +87,7 @@ export async function GET(
 
     // Log activity
     await supabaseAdmin.from('activity_logs').insert({
-      user_id: userId,
+      user_id: profileId,
       action: 'dataset.download',
       entity_type: 'dataset',
       entity_id: id,
